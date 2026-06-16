@@ -1,0 +1,1 @@
+import{a as t}from"./client.GBKBwbN8.js";const n={list:(e={})=>t.get("/events?"+new URLSearchParams(e)),getById:e=>t.get(`/events/${e}`),create:e=>t.post("/events",e),update:(e,s)=>t.patch(`/events/${e}`,s),changeStatus:(e,s)=>t.patch(`/events/${e}/status`,{status:s}),remove:e=>t.delete(`/events/${e}`)};export{n as eventsApi};

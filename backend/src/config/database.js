@@ -8,7 +8,8 @@ export async function connectDatabase() {
     logger.info({ uri: env.MONGO_URI }, 'Conectado a MongoDB');
   } catch (err) {
     logger.error({ err }, 'Error al conectar a MongoDB');
-    process.exit(1);
+    // En serverless no usar process.exit — lanzar el error para que el caller decida
+    throw err;
   }
 }
 

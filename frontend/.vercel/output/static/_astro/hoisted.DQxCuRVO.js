@@ -1,0 +1,1 @@
+import{g as n,c as o}from"./client.GBKBwbN8.js";import{a}from"./auth.api.fEwZGCIp.js";const t=document.getElementById("header-user-name"),s=document.getElementById("logout-btn"),e=n();e&&t&&(t.textContent=e.name);s?.addEventListener("click",async()=>{try{await a.logout()}catch{}finally{o(),window.location.href="/login"}});
