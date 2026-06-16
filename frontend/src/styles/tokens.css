@@ -1,0 +1,93 @@
+:root {
+  /* Paleta de color personalizada */
+  --color-gold: #CE7E1F;
+  --color-gold-dark: #AF762B;
+  --color-gold-pale: #faf0e0;
+  --color-gold-subtle: #fdf8f0;
+  --color-gold-border: #e8c88a;
+  --color-white: #ffffff;
+  --color-off-white: #f7f4f0;
+  --color-gray-1: #f2f2f2;
+  --color-gray-2: #e4e4e4;
+  --color-gray-3: #999999;
+  --color-gray-4: #666666;
+  --color-text: #2a2a2a;
+  --color-green: #1a6e3c;
+  --color-green-bg: #d4edda;
+  --color-blue: #14427a;
+  --color-blue-bg: #d0e4f7;
+  --color-border: #e0d8cc;
+
+  --color-primary: #CE7E1F;
+  --color-primary-dark: #AF762B;
+  --color-primary-light: #f0b429;
+  --color-accent: #CE7E1F;
+  --color-accent-light: #f0b429;
+
+  --color-bg: #f7f4f0;
+  --color-surface: #ffffff;
+  --color-surface-alt: #faf0e0;
+  --color-border: #e0d8cc;
+  --color-border-strong: #e8c88a;
+
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-text-inverse: #ffffff;
+
+  --color-success: #1a6e3c;
+  --color-success-bg: #d4edda;
+  --color-warning: #AF762B;
+  --color-warning-bg: #faf0e0;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fde8e6;
+  --color-info: #14427a;
+  --color-info-bg: #d0e4f7;
+
+  /* Tipografía */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Espaciado (escala 4px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Bordes */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.05);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --header-height: 60px;
+
+  /* Transiciones */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}

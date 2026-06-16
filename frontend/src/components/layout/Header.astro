@@ -1,0 +1,100 @@
+---
+---
+<header class="header">
+  <div class="header-inner">
+    <div class="header-title" id="page-title"></div>
+    <div class="header-actions">
+      <div class="header-user" id="header-user">
+        <span class="header-user-name" id="header-user-name">Cargando...</span>
+        <button class="header-logout-btn" id="logout-btn" type="button" aria-label="Cerrar sesión">
+          Salir
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { getUser, clearSession } from '../../lib/auth/session.js';
+  import { authApi } from '../../lib/api/auth.api.js';
+
+  const userNameEl = document.getElementById('header-user-name');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  const user = getUser();
+  if (user && userNameEl) {
+    userNameEl.textContent = user.name;
+  }
+
+  logoutBtn?.addEventListener('click', async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // logout silencioso
+    } finally {
+      clearSession();
+      window.location.href = '/login';
+    }
+  });
+</script>
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--header-height);
+    background-color: var(--color-white);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 90;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 var(--space-8);
+  }
+
+  .header-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-gold-dark);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .header-user-name {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text-secondary);
+  }
+
+  .header-logout-btn {
+    background: var(--color-gold);
+    border: 1px solid var(--color-gold-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-white);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .header-logout-btn:hover {
+    background: var(--color-gold-dark);
+  }
+</style>

@@ -1,0 +1,37 @@
+{
+  "name": "geh-events-backend",
+  "version": "0.1.0",
+  "description": "GEH Events Command Center — API Backend",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "seed": "node src/seeds/catalogs.seed.js && node src/seeds/admin.seed.js",
+    "seed:catalogs": "node src/seeds/catalogs.seed.js",
+    "seed:admin": "node src/seeds/admin.seed.js",
+    "lint": "eslint src --ext .js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1",
+    "pino": "^9.2.0",
+    "pino-http": "^10.2.0",
+    "pino-pretty": "^11.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "supertest": "^7.0.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

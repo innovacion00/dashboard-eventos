@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Variables de entorno
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+frontend/dist/
+frontend/.astro/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Test coverage
+coverage/
+.vitest/

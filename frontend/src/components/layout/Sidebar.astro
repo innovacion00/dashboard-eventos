@@ -1,0 +1,114 @@
+---
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: '▦' },
+  { href: '/empresas', label: 'Empresas', icon: '🏢' },
+  { href: '/pipeline', label: 'Pipeline', icon: '◈' },
+  { href: '/actividades', label: 'Actividades', icon: '◎' },
+  { href: '/tareas', label: 'Tareas', icon: '✓' },
+  { href: '/metas', label: 'Metas', icon: '◉' },
+  { href: '/salones', label: 'Salones', icon: '⬡' },
+  { href: '/usuarios', label: 'Usuarios', icon: '◻' },
+  { href: '/auditoria', label: 'Auditoría', icon: '≡' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="sidebar-brand-icon">◈</span>
+    <span class="sidebar-brand-text">GEH Events</span>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Navegación principal">
+    <ul>
+      {navItems.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class={`sidebar-link ${currentPath.startsWith(item.href) ? 'sidebar-link--active' : ''}`}
+            aria-current={currentPath.startsWith(item.href) ? 'page' : undefined}
+          >
+            <span class="sidebar-link-icon" aria-hidden="true">{item.icon}</span>
+            <span class="sidebar-link-label">{item.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</aside>
+
+<style>
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--color-white);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5);
+    height: var(--header-height);
+    background-color: var(--color-gold);
+    color: var(--color-white);
+    font-weight: var(--font-bold);
+    font-size: var(--text-lg);
+  }
+
+  .sidebar-brand-icon {
+    font-size: var(--text-2xl);
+    color: var(--color-accent);
+  }
+
+  .sidebar-nav {
+    padding: var(--space-4) 0;
+    flex: 1;
+  }
+
+  .sidebar-nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    border-radius: var(--radius-sm);
+  }
+
+  .sidebar-link:hover {
+    background-color: var(--color-gold-subtle);
+    color: var(--color-gold-dark);
+    text-decoration: none;
+  }
+
+  .sidebar-link--active {
+    background-color: var(--color-gold-pale);
+    color: var(--color-gold-dark);
+    border-left: 3px solid var(--color-gold);
+  }
+
+  .sidebar-link-icon {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+</style>
