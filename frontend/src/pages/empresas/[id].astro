@@ -1,0 +1,10 @@
+---
+import Layout from '../../components/layout/Layout.astro';
+import { CompanyDetail } from '../../components/crm/CompanyDetail.jsx';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Detalle de empresa">
+  <CompanyDetail companyId={id} client:load />
+</Layout>

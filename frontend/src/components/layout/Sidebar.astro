@@ -1,14 +1,39 @@
 ---
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '▦' },
-  { href: '/empresas', label: 'Empresas', icon: '🏢' },
-  { href: '/pipeline', label: 'Pipeline', icon: '◈' },
-  { href: '/actividades', label: 'Actividades', icon: '◎' },
-  { href: '/tareas', label: 'Tareas', icon: '✓' },
-  { href: '/metas', label: 'Metas', icon: '◉' },
-  { href: '/salones', label: 'Salones', icon: '⬡' },
-  { href: '/usuarios', label: 'Usuarios', icon: '◻' },
-  { href: '/auditoria', label: 'Auditoría', icon: '≡' },
+const navSections = [
+  {
+    label: 'Comercial',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: '▦' },
+      { href: '/empresas', label: 'Empresas', icon: '🏢' },
+      { href: '/pipeline', label: 'Pipeline', icon: '◈' },
+      { href: '/cotizaciones', label: 'Cotizaciones', icon: '◧' },
+      { href: '/actividades', label: 'Actividades', icon: '◎' },
+      { href: '/tareas', label: 'Tareas', icon: '✓' },
+      { href: '/metas', label: 'Metas', icon: '◉' },
+    ],
+  },
+  {
+    label: 'Operativo',
+    items: [
+      { href: '/eventos', label: 'Eventos', icon: '◆' },
+      { href: '/salones', label: 'Salones', icon: '⬡' },
+      { href: '/servicios', label: 'Servicios', icon: '◑' },
+    ],
+  },
+  {
+    label: 'Financiero',
+    items: [
+      { href: '/facturas', label: 'Facturas', icon: '◨' },
+      { href: '/comisiones', label: 'Comisiones', icon: '$' },
+    ],
+  },
+  {
+    label: 'Administración',
+    items: [
+      { href: '/usuarios', label: 'Usuarios', icon: '◻' },
+      { href: '/auditoria', label: 'Auditoría', icon: '≡' },
+    ],
+  },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -21,20 +46,25 @@ const currentPath = Astro.url.pathname;
   </div>
 
   <nav class="sidebar-nav" aria-label="Navegación principal">
-    <ul>
-      {navItems.map((item) => (
-        <li>
-          <a
-            href={item.href}
-            class={`sidebar-link ${currentPath.startsWith(item.href) ? 'sidebar-link--active' : ''}`}
-            aria-current={currentPath.startsWith(item.href) ? 'page' : undefined}
-          >
-            <span class="sidebar-link-icon" aria-hidden="true">{item.icon}</span>
-            <span class="sidebar-link-label">{item.label}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+    {navSections.map((section) => (
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">{section.label}</span>
+        <ul>
+          {section.items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class={`sidebar-link ${currentPath.startsWith(item.href) ? 'sidebar-link--active' : ''}`}
+                aria-current={currentPath.startsWith(item.href) ? 'page' : undefined}
+              >
+                <span class="sidebar-link-icon" aria-hidden="true">{item.icon}</span>
+                <span class="sidebar-link-label">{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
   </nav>
 </aside>
 
@@ -71,8 +101,22 @@ const currentPath = Astro.url.pathname;
   }
 
   .sidebar-nav {
-    padding: var(--space-4) 0;
+    padding: var(--space-3) 0;
     flex: 1;
+  }
+
+  .sidebar-section {
+    margin-bottom: var(--space-2);
+  }
+
+  .sidebar-section-label {
+    display: block;
+    padding: var(--space-2) var(--space-5) var(--space-1);
+    font-size: 0.65rem;
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
   }
 
   .sidebar-nav ul {

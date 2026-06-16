@@ -9,9 +9,10 @@
     "start": "node src/server.js",
     "test": "vitest",
     "test:run": "vitest run",
-    "seed": "node src/seeds/catalogs.seed.js && node src/seeds/admin.seed.js",
+    "seed": "node src/seeds/catalogs.seed.js && node src/seeds/admin.seed.js && node src/seeds/rooms.seed.js",
     "seed:catalogs": "node src/seeds/catalogs.seed.js",
     "seed:admin": "node src/seeds/admin.seed.js",
+    "seed:rooms": "node src/seeds/rooms.seed.js",
     "lint": "eslint src --ext .js"
   },
   "dependencies": {

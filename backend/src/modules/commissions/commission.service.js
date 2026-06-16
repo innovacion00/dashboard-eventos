@@ -1,0 +1,113 @@
+import { commissionRepository } from './commission.repository.js';
+import { NotFoundError } from '../../core/errors/NotFoundError.js';
+import { AppError } from '../../core/errors/AppError.js';
+import { audit } from '../audit/audit.service.js';
+
+const VALID_TRANSITIONS = {
+  CALCULADA: ['APROBADA', 'ANULADA'],
+  APROBADA: ['PAGADA', 'ANULADA'],
+  PAGADA: [],
+  ANULADA: [],
+};
+
+export const commissionService = {
+  async listCommissions(query) {
+    return commissionRepository.findAll(query);
+  },
+
+  async getCommissionById(id) {
+    const com = await commissionRepository.findById(id);
+    if (!com || !com.active) throw new NotFoundError('Comisión no encontrada');
+    return com;
+  },
+
+  async createCommission(data, requestingUser, req) {
+    const com = await commissionRepository.create({ ...data, createdBy: requestingUser.id });
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'commissions',
+      action: 'CREATE',
+      entityId: com._id,
+      after: { number: com.number, amount: com.amount, beneficiaryType: com.beneficiaryType },
+      req,
+    });
+
+    return com;
+  },
+
+  async updateCommission(id, data, requestingUser, req) {
+    const com = await commissionRepository.findById(id);
+    if (!com || !com.active) throw new NotFoundError('Comisión no encontrada');
+    if (com.status !== 'CALCULADA') {
+      throw new AppError('Solo se pueden editar comisiones en estado Calculada', 409, 'INVALID_STATE');
+    }
+
+    const before = { baseAmount: com.baseAmount, rate: com.rate, amount: com.amount };
+    const updated = await commissionRepository.update(id, data);
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'commissions',
+      action: 'UPDATE',
+      entityId: id,
+      before,
+      after: { baseAmount: updated.baseAmount, rate: updated.rate, amount: updated.amount },
+      req,
+    });
+
+    return updated;
+  },
+
+  async changeStatus(id, newStatus, requestingUser, req) {
+    const com = await commissionRepository.findById(id);
+    if (!com || !com.active) throw new NotFoundError('Comisión no encontrada');
+
+    const allowed = VALID_TRANSITIONS[com.status] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new AppError(
+        `No se puede cambiar de ${com.status} a ${newStatus}`,
+        409,
+        'INVALID_TRANSITION'
+      );
+    }
+
+    const before = { status: com.status };
+    const updated = await commissionRepository.changeStatus(id, newStatus, requestingUser.id);
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'commissions',
+      action: 'UPDATE',
+      entityId: id,
+      before,
+      after: { status: newStatus },
+      req,
+    });
+
+    return updated;
+  },
+
+  async deleteCommission(id, requestingUser, req) {
+    const com = await commissionRepository.findById(id);
+    if (!com || !com.active) throw new NotFoundError('Comisión no encontrada');
+    if (com.status === 'PAGADA') {
+      throw new AppError('No se puede eliminar una comisión ya pagada', 409, 'INVALID_STATE');
+    }
+
+    await commissionRepository.softDelete(id);
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'commissions',
+      action: 'DELETE',
+      entityId: id,
+      before: { number: com.number, status: com.status },
+      req,
+    });
+  },
+};

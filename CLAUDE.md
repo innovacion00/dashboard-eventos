@@ -239,8 +239,10 @@ Cuando se me pida implementar una nueva funcionalidad, sigo este orden:
 
 > Esta sección se actualiza a medida que avanza el proyecto.
 
-**Fase actual**: Fase 0 — Cimientos (setup inicial).
+**Fase actual**: Fase 1 completada — Núcleo comercial (MVP).
 
-**Último hito completado**: ninguno todavía.
+**Último hito completado**: H4 — MVP completo. Todos los módulos de Fase 1 implementados con RBAC, auditoría y frontend funcional.
 
-**Próximo hito (H0)**: estructura del repo lista, `npm run dev` arranca backend y frontend, login funcional.
+**Hitos completados**: H0 (cimientos), H1 (CRM), H2 (Pipeline), H3 (Dashboard), H4 (MVP completo).
+
+**Próxima fase (Fase 2)**: Ciclo operativo — conversión Oportunidad confirmada → Evento operativo, Cotizaciones, BEO, catálogo completo de salones y servicios.

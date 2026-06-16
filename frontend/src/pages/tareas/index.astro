@@ -1,0 +1,8 @@
+---
+import Layout from '../../components/layout/Layout.astro';
+import { TaskList } from '../../components/tasks/TaskList.jsx';
+---
+
+<Layout title="Tareas">
+  <TaskList client:load />
+</Layout>
