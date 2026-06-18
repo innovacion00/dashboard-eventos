@@ -11,6 +11,12 @@ const activitySchema = new mongoose.Schema(
     nextActionDescription: { type: String },
     nextActionAt: { type: Date },
     completed: { type: Boolean, default: true },
+    attachments: [{
+      filename: { type: String },
+      originalName: { type: String },
+      mimetype: { type: String },
+      size: { type: Number },
+    }],
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   },
   { timestamps: true, collection: 'activities' }

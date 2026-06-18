@@ -31,7 +31,6 @@ const COLUMNS = [
     key: 'company', label: 'Empresa',
     render: (r) => <a href={`/empresas/${r.company?.id || r.company?._id}`}>{r.company?.name || '—'}</a>,
   },
-  { key: 'eventType', label: 'Tipo de evento' },
   {
     key: 'stage', label: 'Etapa',
     render: (r) => (
@@ -40,10 +39,11 @@ const COLUMNS = [
       </span>
     ),
   },
+  { key: 'eventType', label: 'Tipo de evento', render: (r) => r.eventType || '—' },
   { key: 'estimatedValue', label: 'Valor estimado', render: (r) => formatCurrency(r.estimatedValue) },
   { key: 'weightedValue', label: 'Valor ponderado', render: (r) => formatCurrency(r.weightedValue) },
   { key: 'projectionMonth', label: 'Mes proyección' },
-  { key: 'nextActionAt', label: 'Próxima acción', render: (r) => formatDate(r.nextActionAt) },
+  { key: 'nextActionAt', label: 'Próxima acción', render: (r) => r.stage === 'PROSPECTO_INICIAL' ? 'Correo electrónico' : formatDate(r.nextActionAt) },
   {
     key: 'overdue', label: '', width: 60,
     render: (r) => r.isOverdue ? <span className="badge badge-danger">Vencida</span> : null,
@@ -67,12 +67,14 @@ export function OpportunityList() {
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [stageFilter, setStageFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   const load = async () => {
     try {
       setLoading(true);
       const params = {};
       if (stageFilter) params.stage = stageFilter;
+      if (search) params.q = search;
       const res = await opportunitiesApi.list(params);
       setOpps(res.data);
       setMeta(res.meta);
@@ -83,7 +85,7 @@ export function OpportunityList() {
     }
   };
 
-  useEffect(() => { load(); }, [stageFilter]);
+  useEffect(() => { load(); }, [stageFilter, search]);
 
   const handleEdit = (opp) => { setSelected(opp); setModal('edit'); };
   const handleStage = (opp) => { setSelected(opp); setModal('stage'); };
@@ -102,6 +104,13 @@ export function OpportunityList() {
       </div>
 
       <div className="page-filters">
+        <input
+          className="input-control"
+          placeholder="Buscar empresa..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: 280 }}
+        />
         <select className="input-control" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={{ maxWidth: 220 }}>
           <option value="">Todas las etapas</option>
           {Object.entries(STAGE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}

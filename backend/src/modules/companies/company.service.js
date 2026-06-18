@@ -8,6 +8,11 @@ export const companyService = {
     return companyRepository.findAll(query);
   },
 
+  async listSegments() {
+    const segments = await companyRepository.distinctSegments();
+    return segments.sort();
+  },
+
   async getCompanyById(id) {
     const company = await companyRepository.findById(id);
     if (!company || !company.active) throw new NotFoundError('Empresa no encontrada');

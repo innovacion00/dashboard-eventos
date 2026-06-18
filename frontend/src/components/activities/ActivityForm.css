@@ -1,0 +1,81 @@
+.af-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--color-surface);
+}
+
+.af-dropzone:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-gray-1);
+}
+
+.af-dropzone-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.af-dropzone-hint {
+  font-size: var(--text-xs);
+}
+
+.af-file-list {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.af-file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.af-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.af-file-size {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+.af-file-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.af-file-remove:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-bg, #fef2f2);
+}

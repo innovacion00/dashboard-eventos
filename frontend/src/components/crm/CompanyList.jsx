@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { companiesApi } from '../../lib/api/companies.api.js';
-import { catalogsApi } from '../../lib/api/catalogs.api.js';
 import { Table } from '../ui/Table.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { CompanyForm } from './CompanyForm.jsx';
 import { CompanyImport } from './CompanyImport.jsx';
-import { formatDate } from '../../lib/utils/format.js';
 
 const STATUS_LABELS = {
   PROSPECTO: 'Prospecto',
@@ -19,11 +17,14 @@ const STATUS_LABELS = {
 };
 
 const COLUMNS = [
-  { key: 'name', label: 'Empresa', render: (r) => <a href={`/empresas/${r.id}`}>{r.name}</a> },
+  { key: 'name', label: 'Nombre', render: (r) => <a href={`/empresas/${r.id}`}>{r.name}</a> },
   { key: 'segment', label: 'Segmento' },
   { key: 'status', label: 'Estado', render: (r) => STATUS_LABELS[r.status] || r.status },
-  { key: 'owner', label: 'Responsable', render: (r) => r.owner?.name || '—' },
-  { key: 'nextActionAt', label: 'Próxima acción', render: (r) => formatDate(r.nextActionAt) },
+  { key: 'contactName', label: 'Contacto', render: (r) => r.contactName || '—' },
+  { key: 'contactPosition', label: 'Cargo', render: (r) => r.contactPosition || '—' },
+  { key: 'phone', label: 'Teléfono', render: (r) => r.phone || '—' },
+  { key: 'email', label: 'Correo', render: (r) => r.email || '—' },
+  { key: 'address', label: 'Dirección', render: (r) => r.address || '—' },
 ];
 
 export function CompanyList() {
@@ -38,7 +39,7 @@ export function CompanyList() {
   const [segmentFilter, setSegmentFilter] = useState('');
 
   useEffect(() => {
-    catalogsApi.list('SEGMENT').then(res => setSegments(res.data || [])).catch(() => {});
+    companiesApi.listSegments().then(res => setSegments(res.data || [])).catch(() => {});
   }, []);
 
   const load = async () => {
@@ -86,7 +87,7 @@ export function CompanyList() {
         >
           <option value="">Todos los segmentos</option>
           {segments.map(s => (
-            <option key={s.code} value={s.name}>{s.name}</option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
         <select

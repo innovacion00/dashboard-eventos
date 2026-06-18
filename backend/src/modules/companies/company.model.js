@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 const companySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, index: 'text' },
-    taxId: { type: String, trim: true, sparse: true },
     segment: { type: String, required: true },
     status: {
       type: String,
@@ -11,13 +10,11 @@ const companySchema = new mongoose.Schema(
       enum: ['PROSPECTO', 'CLIENTE_ACTIVO', 'CLIENTE_INACTIVO', 'ALIADO', 'AGENCIA', 'GUBERNAMENTAL'],
       default: 'PROSPECTO',
     },
-    origin: { type: String },
-    estimatedPotential: { type: Number, min: 0 },
-    location: {
-      country: { type: String },
-      city: { type: String },
-      address: { type: String },
-    },
+    contactName: { type: String, trim: true },
+    contactPosition: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+    address: { type: String, trim: true },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     lastContactAt: { type: Date },
     nextActionAt: { type: Date },

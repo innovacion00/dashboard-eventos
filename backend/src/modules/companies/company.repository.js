@@ -8,7 +8,7 @@ export const companyRepository = {
     if (query.status) filter.status = query.status;
     if (query.segment) filter.segment = query.segment;
     if (query.owner) filter.ownerId = query.owner;
-    if (query.q) filter.$text = { $search: query.q };
+    if (query.q) filter.name = { $regex: query.q, $options: 'i' };
 
     const [companies, total] = await Promise.all([
       Company.find(filter).populate('ownerId', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -34,8 +34,19 @@ export const companyRepository = {
   },
 
   async bulkCreate(dataArray) {
-    const docs = await Company.insertMany(dataArray, { ordered: false });
-    return docs.length;
+    try {
+      const docs = await Company.insertMany(dataArray, { ordered: false });
+      return docs.length;
+    } catch (err) {
+      if (err.name === 'MongoBulkWriteError') {
+        return err.result?.insertedCount ?? 0;
+      }
+      throw err;
+    }
+  },
+
+  async distinctSegments() {
+    return Company.distinct('segment', { active: true, segment: { $ne: null, $ne: '' } });
   },
 
   async hasRelations(id) {

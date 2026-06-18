@@ -7,6 +7,11 @@ import { Opportunity } from '../opportunities/opportunity.model.js';
 import { getPagination, buildMeta } from '../../core/utils/paginate.js';
 
 export const companyController = {
+  listSegments: asyncHandler(async (req, res) => {
+    const segments = await companyService.listSegments();
+    successResponse(res, segments);
+  }),
+
   list: asyncHandler(async (req, res) => {
     const { companies, meta } = await companyService.listCompanies(req.query);
     successResponse(res, companies.map(mapCompany), 200, meta);
@@ -49,10 +54,19 @@ export const companyController = {
 
   listActivities: asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
-    const [activities, total] = await Promise.all([
+    const [rawActivities, total] = await Promise.all([
       Activity.find({ companyId: req.params.id }).sort({ date: -1 }).skip(skip).limit(limit),
       Activity.countDocuments({ companyId: req.params.id }),
     ]);
+    const base = `${req.protocol}://${req.get('host')}/uploads/activities`;
+    const activities = rawActivities.map((a) => {
+      const obj = a.toObject();
+      obj.attachments = (obj.attachments || []).map((att) => ({
+        ...att,
+        url: `${base}/${att.filename}`,
+      }));
+      return obj;
+    });
     successResponse(res, activities, 200, buildMeta(page, limit, total));
   }),
 
@@ -71,12 +85,13 @@ function mapCompany(c) {
   return {
     id: c._id,
     name: c.name,
-    taxId: c.taxId,
     segment: c.segment,
     status: c.status,
-    origin: c.origin,
-    estimatedPotential: c.estimatedPotential,
-    location: c.location,
+    contactName: c.contactName,
+    contactPosition: c.contactPosition,
+    phone: c.phone,
+    email: c.email,
+    address: c.address,
     owner: c.ownerId,
     lastContactAt: c.lastContactAt,
     nextActionAt: c.nextActionAt,

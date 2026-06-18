@@ -9,20 +9,29 @@ const VALID_STATUSES = new Set(['PROSPECTO', 'CLIENTE_ACTIVO', 'CLIENTE_INACTIVO
 
 const COL_MAP = {
   nombre: 'name',
-  nit: 'taxId',
   segmento: 'segment',
   estado: 'status',
-  ciudad: 'city',
-  pais: 'country',
+  contacto: 'contactName',
+  cargo: 'contactPosition',
+  telefono: 'phone',
+  correo: 'email',
   direccion: 'address',
-  potencial: 'estimatedPotential',
 };
+
+function normalizeKey(k) {
+  return k
+    .replace(/^﻿/, '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z]/g, '')
+    .trim();
+}
 
 function parseRows(rawRows) {
   return rawRows.map((raw, i) => {
     const norm = {};
     for (const [k, v] of Object.entries(raw)) {
-      norm[k.toLowerCase().trim()] = v;
+      norm[normalizeKey(k)] = v;
     }
 
     const row = { _rowIndex: i + 2, _errors: [] };
@@ -32,23 +41,13 @@ function parseRows(rawRows) {
       if (val !== undefined && val !== '') row[fieldKey] = String(val).trim();
     }
 
-    const location = {};
-    if (row.city)    { location.city    = row.city;    delete row.city;    }
-    if (row.country) { location.country = row.country; delete row.country; }
-    if (row.address) { location.address = row.address; delete row.address; }
-    if (Object.keys(location).length > 0) row.location = location;
-
-    if (row.estimatedPotential !== undefined) {
-      const num = parseFloat(row.estimatedPotential);
-      if (isNaN(num)) delete row.estimatedPotential;
-      else row.estimatedPotential = num;
-    }
-
     if (row.status) {
       const upper = row.status.toUpperCase();
       if (VALID_STATUSES.has(upper)) row.status = upper;
       else delete row.status;
     }
+
+    if (row.email && !row.email.includes('@')) delete row.email;
 
     if (!row.name || row.name.length < 2) row._errors.push('nombre faltante o muy corto');
     if (!row.segment) row._errors.push('segmento faltante');
@@ -59,8 +58,8 @@ function parseRows(rawRows) {
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
-    ['nombre', 'nit', 'segmento', 'estado', 'ciudad', 'pais', 'direccion', 'potencial'],
-    ['Hotel Example', '900123456', 'Corporativo', 'PROSPECTO', 'Bogotá', 'Colombia', 'Calle 123 #45-67', '50000000'],
+    ['NOMBRE', 'SEGMENTO', 'ESTADO', 'CONTACTO', 'CARGO', 'TELEFONO', 'CORREO', 'DIRECCION'],
+    ['Hotel Example', 'Corporativo', 'PROSPECTO', 'Juan Pérez', 'Gerente General', '3001234567', 'juan@example.com', 'Calle 123 #45-67, Bogotá'],
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Empresas');
@@ -89,9 +88,10 @@ export function CompanyImport({ onImported }) {
       try {
         const wb = XLSX.read(ev.target.result, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rawRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const allRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const rawRows = allRows.filter(r => Object.values(r).some(v => String(v).trim() !== ''));
         if (rawRows.length === 0) { setError('El archivo está vacío o no tiene filas de datos.'); return; }
-        if (rawRows.length > 500) { setError('El archivo supera el límite de 500 filas.'); return; }
+        if (rawRows.length > 5000) { setError('El archivo supera el límite de 5000 filas.'); return; }
         setRows(parseRows(rawRows));
         setOpen(true);
       } catch {
@@ -181,9 +181,12 @@ export function CompanyImport({ onImported }) {
                       <th style={TH}>Fila</th>
                       <th style={TH}>Nombre</th>
                       <th style={TH}>Segmento</th>
-                      <th style={TH}>NIT</th>
-                      <th style={TH}>Ciudad</th>
                       <th style={TH}>Estado</th>
+                      <th style={TH}>Contacto</th>
+                      <th style={TH}>Cargo</th>
+                      <th style={TH}>Teléfono</th>
+                      <th style={TH}>Correo</th>
+                      <th style={TH}>Dirección</th>
                       <th style={TH}>Errores</th>
                     </tr>
                   </thead>
@@ -196,9 +199,12 @@ export function CompanyImport({ onImported }) {
                         <td style={TD}>{r._rowIndex}</td>
                         <td style={TD}>{r.name || <span className="text-danger">—</span>}</td>
                         <td style={TD}>{r.segment || <span className="text-danger">—</span>}</td>
-                        <td style={TD}>{r.taxId || '—'}</td>
-                        <td style={TD}>{r.location?.city || '—'}</td>
                         <td style={TD}>{r.status || 'PROSPECTO'}</td>
+                        <td style={TD}>{r.contactName || '—'}</td>
+                        <td style={TD}>{r.contactPosition || '—'}</td>
+                        <td style={TD}>{r.phone || '—'}</td>
+                        <td style={TD}>{r.email || '—'}</td>
+                        <td style={TD}>{r.address || '—'}</td>
                         <td style={{ ...TD, color: 'var(--color-danger)' }}>
                           {r._errors.length > 0 ? r._errors.join(', ') : ''}
                         </td>

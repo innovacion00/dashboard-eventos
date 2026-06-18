@@ -19,7 +19,7 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers, cache: 'no-store' });
 
   if (res.status === 401) {
     clearSession();
@@ -36,9 +36,25 @@ export async function apiFetch(path, options = {}) {
   return json;
 }
 
+export async function apiFetchMultipart(path, formData) {
+  const token = getToken();
+  const headers = { ...(token && { Authorization: `Bearer ${token}` }) };
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    body: formData,
+    headers,
+    cache: 'no-store',
+  });
+  if (res.status === 401) { clearSession(); window.location.href = '/login'; return; }
+  const json = await res.json();
+  if (!res.ok) throw new ApiError(json.error);
+  return json;
+}
+
 export const api = {
   get: (path, options) => apiFetch(path, { method: 'GET', ...options }),
   post: (path, body, options) => apiFetch(path, { method: 'POST', body: JSON.stringify(body), ...options }),
+  postForm: (path, formData) => apiFetchMultipart(path, formData),
   patch: (path, body, options) => apiFetch(path, { method: 'PATCH', body: JSON.stringify(body), ...options }),
   delete: (path, options) => apiFetch(path, { method: 'DELETE', ...options }),
 };

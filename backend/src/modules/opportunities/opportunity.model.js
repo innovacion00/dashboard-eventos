@@ -5,13 +5,13 @@ const opportunitySchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    eventType: { type: String, required: true },
+    eventType: { type: String },
     segment: { type: String },
     probableRoomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
     estimatedEventDate: { type: Date },
     projectionMonth: { type: String, index: true }, // YYYY-MM
     attendees: { type: Number, min: 0 },
-    estimatedValue: { type: Number, required: true, min: 0 },
+    estimatedValue: { type: Number, min: 0, default: 0 },
     stage: { type: String, required: true, enum: STAGE_CODES, default: 'PROSPECTO_INICIAL', index: true },
     probability: { type: Number, min: 0, max: 100 },
     weightedValue: { type: Number, min: 0 },

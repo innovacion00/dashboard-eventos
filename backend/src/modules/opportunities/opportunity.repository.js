@@ -1,5 +1,6 @@
 import { Opportunity } from './opportunity.model.js';
 import { OpportunityHistory } from './opportunity-history.model.js';
+import { Company } from '../companies/company.model.js';
 import { getPagination, buildMeta } from '../../core/utils/paginate.js';
 
 export const opportunityRepository = {
@@ -10,6 +11,13 @@ export const opportunityRepository = {
     if (query.owner) filter.ownerId = query.owner;
     if (query.companyId) filter.companyId = query.companyId;
     if (query.month) filter.projectionMonth = query.month;
+    if (query.q) {
+      const matches = await Company.find(
+        { name: { $regex: query.q, $options: 'i' }, active: true },
+        '_id'
+      ).lean();
+      filter.companyId = { $in: matches.map((c) => c._id) };
+    }
     if (query.from || query.to) {
       filter.estimatedEventDate = {};
       if (query.from) filter.estimatedEventDate.$gte = new Date(query.from);

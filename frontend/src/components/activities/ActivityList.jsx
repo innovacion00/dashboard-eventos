@@ -9,6 +9,15 @@ const COLUMNS = [
   { key: 'company', label: 'Empresa', render: (r) => r.companyId?.name || '—' },
   { key: 'type', label: 'Tipo' },
   { key: 'result', label: 'Resultado' },
+  { key: 'attachments', label: 'Evidencias', render: (r) => {
+    const list = r.attachments || [];
+    if (list.length === 0) return '—';
+    return list.map((a, i) => (
+      <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-primary)' }}>
+        📎 {a.originalName}
+      </a>
+    ));
+  }},
   { key: 'owner', label: 'Registrado por', render: (r) => r.ownerId?.name || '—' },
   { key: 'nextActionAt', label: 'Próxima acción', render: (r) => formatDate(r.nextActionAt) },
 ];

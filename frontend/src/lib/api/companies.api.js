@@ -6,6 +6,7 @@ export const companiesApi = {
   create: (data) => api.post('/companies', data),
   update: (id, data) => api.patch(`/companies/${id}`, data),
   remove: (id) => api.delete(`/companies/${id}`),
+  listSegments: () => api.get('/companies/segments'),
   importCompanies: (companies) => api.post('/companies/import', { companies }),
   listContacts: (id, params = {}) => api.get(`/companies/${id}/contacts?` + new URLSearchParams(params)),
   listActivities: (id, params = {}) => api.get(`/companies/${id}/activities?` + new URLSearchParams(params)),

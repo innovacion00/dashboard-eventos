@@ -13,6 +13,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', companyController.list);
+router.get('/segments', companyController.listSegments);
 router.post('/import', validate(importCompaniesSchema), companyController.importCompanies);
 router.post('/', validate(createCompanySchema), companyController.create);
 router.get('/:id', companyController.getById);

@@ -7,7 +7,7 @@ import { Modal } from '../ui/Modal.jsx';
 import { CompanyForm } from './CompanyForm.jsx';
 import { ContactForm } from './ContactForm.jsx';
 import { ActivityForm } from '../activities/ActivityForm.jsx';
-import { formatDate, formatCurrency } from '../../lib/utils/format.js';
+import { formatDate } from '../../lib/utils/format.js';
 
 const STATUS_LABELS = {
   PROSPECTO: 'Prospecto', CLIENTE_ACTIVO: 'Cliente activo', CLIENTE_INACTIVO: 'Cliente inactivo',
@@ -86,14 +86,13 @@ export function CompanyDetail({ companyId }) {
       {activeTab === 'info' && (
         <div className="detail-grid">
           <InfoRow label="Segmento" value={company.segment} />
-          <InfoRow label="NIT / RUT" value={company.taxId} />
-          <InfoRow label="Ciudad" value={company.location?.city} />
-          <InfoRow label="País" value={company.location?.country} />
-          <InfoRow label="Potencial estimado" value={formatCurrency(company.estimatedPotential)} />
+          <InfoRow label="Estado" value={STATUS_LABELS[company.status] || company.status} />
+          <InfoRow label="Contacto" value={company.contactName} />
+          <InfoRow label="Cargo" value={company.contactPosition} />
+          <InfoRow label="Teléfono" value={company.phone} />
+          <InfoRow label="Correo" value={company.email} />
+          <InfoRow label="Dirección" value={company.address} />
           <InfoRow label="Responsable" value={company.owner?.name} />
-          <InfoRow label="Último contacto" value={formatDate(company.lastContactAt)} />
-          <InfoRow label="Próxima acción" value={formatDate(company.nextActionAt)} />
-          <InfoRow label="Descripción próxima acción" value={company.nextActionDescription} />
         </div>
       )}
 
@@ -127,6 +126,15 @@ export function CompanyDetail({ companyId }) {
                     <strong>{a.type}</strong>
                     <p>{a.result}</p>
                     {a.nextActionDescription && <p className="text-muted">Próxima acción: {a.nextActionDescription} ({formatDate(a.nextActionAt)})</p>}
+                    {a.attachments && a.attachments.length > 0 && (
+                      <div style={{ marginTop: 'var(--space-1)', display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                        {a.attachments.map((att, i) => (
+                          <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)' }}>
+                            📎 {att.originalName}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}

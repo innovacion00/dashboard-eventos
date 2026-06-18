@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import { requestLogger } from './core/middlewares/request-logger.middleware.js';
 import { errorMiddleware } from './core/middlewares/error.middleware.js';
 import { NotFoundError } from './core/errors/NotFoundError.js';
@@ -28,8 +32,9 @@ import { commissionRouter } from './modules/commissions/commission.routes.js';
 const app = express();
 
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(requestLogger);
 
 app.use('/api/v1/auth', authRouter);

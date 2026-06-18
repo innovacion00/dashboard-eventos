@@ -9,10 +9,18 @@ import { formatCurrency } from '../../lib/utils/format.js';
 const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros' };
 const CATEGORIES = Object.entries(CATEGORY_LABELS);
 
+const TAX_RATE = (category) => category === 'AB' ? 8 : 19;
+const totalPrice = (unitPrice, category) => {
+  const rate = TAX_RATE(category);
+  return unitPrice * (1 + rate / 100);
+};
+
 const COLUMNS = [
   { key: 'name', label: 'Nombre' },
   { key: 'category', label: 'Categoría', render: (r) => CATEGORY_LABELS[r.category] || r.category },
-  { key: 'unitPrice', label: 'Precio', render: (r) => `${formatCurrency(r.unitPrice)} / ${r.unit || 'unidad'}` },
+  { key: 'unitPrice', label: 'Precio base', render: (r) => `${formatCurrency(r.unitPrice)} / ${r.unit || 'unidad'}` },
+  { key: 'taxRate', label: 'Impuesto', render: (r) => { const rate = r.taxRate ?? TAX_RATE(r.category); return `${formatCurrency(r.unitPrice * rate / 100)} / ${r.unit || 'unidad'}`; } },
+  { key: 'totalPrice', label: 'Total c/impuesto', render: (r) => `${formatCurrency(totalPrice(r.unitPrice, r.category))} / ${r.unit || 'unidad'}` },
   { key: 'description', label: 'Descripción', render: (r) => r.description || '—' },
 ];
 
@@ -65,11 +73,19 @@ function ServiceForm({ service, onSaved, onCancel }) {
         </div>
         <div className="input-field">
           <label className="input-label">Precio unitario <span className="input-required">*</span></label>
-          <input className="input-control" type="number" min="0" step="1000" value={form.unitPrice} onChange={e => set('unitPrice', e.target.value)} required />
+          <input className="input-control" type="number" min="0" step="any" value={form.unitPrice} onChange={e => set('unitPrice', e.target.value)} required />
         </div>
         <div className="input-field">
           <label className="input-label">Unidad</label>
           <input className="input-control" value={form.unit} onChange={e => set('unit', e.target.value)} placeholder="persona, hora, unidad..." />
+        </div>
+        <div className="input-field">
+          <label className="input-label">Impuesto</label>
+          <input className="input-control" value={form.unitPrice !== '' ? formatCurrency(Number(form.unitPrice) * TAX_RATE(form.category) / 100) : '—'} readOnly style={{ background: 'var(--color-bg-subtle)', color: 'var(--color-text-muted)' }} />
+        </div>
+        <div className="input-field">
+          <label className="input-label">Total con impuesto</label>
+          <input className="input-control" value={form.unitPrice !== '' ? formatCurrency(totalPrice(Number(form.unitPrice), form.category)) : '—'} readOnly style={{ background: 'var(--color-bg-subtle)', color: 'var(--color-text-muted)' }} />
         </div>
       </div>
       <div className="input-field">
