@@ -1,4 +1,5 @@
 import { quoteService } from './quote.service.js';
+import { generateQuotePdfBuffer } from './quote-pdf.service.js';
 import { asyncHandler } from '../../core/utils/async-handler.js';
 import { successResponse } from '../../core/utils/response.js';
 
@@ -32,6 +33,19 @@ export const quoteController = {
     await quoteService.deleteQuote(req.params.id, req.user, req);
     successResponse(res, null, 204);
   }),
+
+  downloadPdf: asyncHandler(async (req, res) => {
+    const quote = await quoteService.getQuoteById(req.params.id);
+    const pdfBuffer = await generateQuotePdfBuffer(quote);
+    const filename = `${quote.number || 'cotizacion'}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.send(pdfBuffer);
+  }),
 };
 
 function mapQuote(q) {
@@ -58,6 +72,8 @@ function mapQuote(q) {
     })),
     subtotal: q.subtotal,
     taxRate: q.taxRate,
+    icoAmount: q.icoAmount,
+    ivaAmount: q.ivaAmount,
     taxAmount: q.taxAmount,
     total: q.total,
     notes: q.notes,

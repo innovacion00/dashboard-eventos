@@ -25,7 +25,7 @@ const { title = 'GEH Events Command Center' } = Astro.props;
     <div class="app-layout">
       <Sidebar />
       <div class="app-main">
-        <Header />
+        <Header title={title} />
         <main class="app-content">
           <slot />
         </main>

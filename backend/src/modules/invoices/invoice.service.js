@@ -2,6 +2,8 @@ import { invoiceRepository } from './invoice.repository.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
+import { notifyRoles } from '../notifications/notification.service.js';
+import { ROLES } from '../../core/constants/roles.js';
 
 const VALID_TRANSITIONS = {
   BORRADOR: ['EMITIDA', 'ANULADA'],
@@ -116,6 +118,14 @@ export const invoiceService = {
       entityId: id,
       after: { payment: paymentData.amount, newBalance: updated.balance, status: updated.status },
       req,
+    });
+
+    await notifyRoles({
+      roles: [ROLES.FINANCIERO, ROLES.DIRECCION_GENERAL],
+      type: 'PAYMENT_RECEIVED',
+      title: 'Pago recibido',
+      message: `Se registró un pago en la factura ${inv.number}.`,
+      actionUrl: `/facturas/${id}`,
     });
 
     return updated;

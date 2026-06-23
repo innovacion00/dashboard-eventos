@@ -54,8 +54,11 @@ export const updateBeoSchema = z.object({
   body: z.object({
     setup: setupSchema,
     menu: z.array(menuItemSchema).optional(),
+    menuNotes: z.string().optional(),
     audiovisual: z.array(avItemSchema).optional(),
+    avNotes: z.string().optional(),
     personnel: z.array(personnelSchema).optional(),
+    personnelNotes: z.string().optional(),
     suppliers: z.array(supplierSchema).optional(),
     generalNotes: z.string().optional(),
   }),

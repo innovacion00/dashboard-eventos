@@ -49,10 +49,7 @@ export function AuditList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Auditoría</h1>
-      </div>
-      <div className="page-filters">
+<div className="page-filters">
         <select className="input-control" value={moduleFilter} onChange={(e) => setModuleFilter(e.target.value)} style={{ maxWidth: 180 }}>
           <option value="">Todos los módulos</option>
           {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}

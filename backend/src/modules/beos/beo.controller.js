@@ -1,11 +1,12 @@
 import { beoService } from './beo.service.js';
+import { generateBeoPdfBuffer } from './beo-pdf.service.js';
 import { asyncHandler } from '../../core/utils/async-handler.js';
 import { successResponse } from '../../core/utils/response.js';
 
 export const beoController = {
   getByEvent: asyncHandler(async (req, res) => {
-    const beo = await beoService.getByEventId(req.params.eventId);
-    successResponse(res, beo ? mapBeo(beo) : null);
+    const beos = await beoService.getByEventId(req.params.eventId);
+    successResponse(res, (beos || []).map(mapBeo));
   }),
 
   create: asyncHandler(async (req, res) => {
@@ -22,6 +23,19 @@ export const beoController = {
     const beo = await beoService.changeStatus(req.params.id, req.body.status, req.user, req);
     successResponse(res, mapBeo(beo));
   }),
+
+  downloadPdf: asyncHandler(async (req, res) => {
+    const beo = await beoService.getById(req.params.id);
+    const pdfBuffer = await generateBeoPdfBuffer(beo);
+    const filename = `${beo.number || 'BEO'}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.send(pdfBuffer);
+  }),
 };
 
 function mapBeo(b) {
@@ -29,10 +43,14 @@ function mapBeo(b) {
     id: b._id,
     number: b.number,
     eventId: b.eventId,
+    category: b.category,
     setup: b.setup,
     menu: b.menu,
+    menuNotes: b.menuNotes,
     audiovisual: b.audiovisual,
+    avNotes: b.avNotes,
     personnel: b.personnel,
+    personnelNotes: b.personnelNotes,
     suppliers: b.suppliers,
     generalNotes: b.generalNotes,
     status: b.status,

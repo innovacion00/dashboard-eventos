@@ -12,5 +12,6 @@ router.get('/event/:eventId', beoController.getByEvent);
 router.post('/', validate(createBeoSchema), beoController.create);
 router.patch('/:id', validate(updateBeoSchema), beoController.update);
 router.patch('/:id/status', validate(changeBeoStatusSchema), beoController.changeStatus);
+router.get('/:id/pdf', beoController.downloadPdf);
 
 export { router as beoRouter };

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 export const QUOTE_STATUSES = ['BORRADOR', 'EN_REVISION', 'APROBADA', 'RECHAZADA', 'VENCIDA'];
-const ITEM_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS'];
+const ITEM_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
 
 const lineItemSchema = new mongoose.Schema({
   description: { type: String, required: true, trim: true },
@@ -27,6 +27,8 @@ const quoteSchema = new mongoose.Schema(
     items: [lineItemSchema],
     subtotal: { type: Number, default: 0 },
     taxRate: { type: Number, default: 0.19 },
+    icoAmount: { type: Number, default: 0 },
+    ivaAmount: { type: Number, default: 0 },
     taxAmount: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
     notes: { type: String },
@@ -46,13 +48,18 @@ quoteSchema.index({ status: 1 });
 quoteSchema.pre('save', async function (next) {
   // Recalculate item totals and document totals
   let subtotal = 0;
+  let icoBase  = 0;
   for (const item of this.items) {
     item.total = item.quantity * item.unitPrice;
     subtotal += item.total;
+    if (item.category === 'AB') icoBase += item.total;
   }
-  this.subtotal = subtotal;
-  this.taxAmount = Math.round(subtotal * this.taxRate * 100) / 100;
-  this.total = Math.round((subtotal + this.taxAmount) * 100) / 100;
+  const ivaBase  = subtotal - icoBase;
+  this.subtotal  = subtotal;
+  this.ivaAmount = Math.round(ivaBase * (this.taxRate || 0.19) * 100) / 100;
+  this.icoAmount = Math.round(icoBase * 0.08 * 100) / 100;
+  this.taxAmount = Math.round((this.ivaAmount + this.icoAmount) * 100) / 100;
+  this.total     = Math.round((subtotal + this.taxAmount) * 100) / 100;
 
   // Auto-generate quote number on creation
   if (this.isNew && !this.number) {

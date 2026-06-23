@@ -16,4 +16,12 @@ export const roomRepository = {
   async update(id, data) {
     return Room.findByIdAndUpdate(id, { $set: data }, { new: true });
   },
+
+  async addPhoto(id, filename) {
+    return Room.findByIdAndUpdate(id, { $push: { photos: filename } }, { new: true });
+  },
+
+  async removePhoto(id, filename) {
+    return Room.findByIdAndUpdate(id, { $pull: { photos: filename } }, { new: true });
+  },
 };

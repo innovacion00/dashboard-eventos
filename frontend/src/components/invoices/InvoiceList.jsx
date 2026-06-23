@@ -48,10 +48,6 @@ export function InvoiceList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Facturas</h1>
-        <a href="/facturas/nueva" className="btn btn-primary">Nueva factura</a>
-      </div>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
       <div className="page-filters">
         <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -60,6 +56,7 @@ export function InvoiceList() {
             <option key={s} value={s}>{STATUS_LABEL[s]}</option>
           ))}
         </select>
+        <a href="/facturas/nueva" className="btn btn-primary" style={{ marginLeft: 'auto' }}>Nueva factura</a>
       </div>
       {loading ? (
         <p className="text-muted">Cargando...</p>

@@ -103,11 +103,10 @@ export function InvoiceForm({ invoiceId }) {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">{invoiceId ? 'Editar factura' : 'Nueva factura'}</h1>
-        <a href="/facturas" className="btn btn-secondary">Cancelar</a>
+      <div className="page-filters">
+        <a href="/facturas" className="btn btn-secondary" style={{ marginLeft: 'auto' }}>Cancelar</a>
       </div>
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+{error && <Alert type="error" message={error} onClose={() => setError('')} />}
       <form onSubmit={handleSubmit} style={{ maxWidth: 680 }}>
         <div className="form-grid-2">
           <div className="input-field">

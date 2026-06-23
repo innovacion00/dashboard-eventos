@@ -66,11 +66,6 @@ export function QuoteList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Cotizaciones</h1>
-        <Button onClick={() => setShowModal(true)}>Nueva cotización</Button>
-      </div>
-
       <div className="page-filters">
         <select
           className="input-control"
@@ -81,6 +76,7 @@ export function QuoteList() {
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => setShowModal(true)}>Nueva cotización</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}

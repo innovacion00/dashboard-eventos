@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const SERVICE_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS'];
+const SERVICE_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
 
 const serviceSchema = new mongoose.Schema(
   {

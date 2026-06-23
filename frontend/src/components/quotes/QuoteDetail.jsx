@@ -34,7 +34,7 @@ const NEXT_STATUSES = {
   VENCIDA: [],
 };
 
-const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros' };
+const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', EXTERNO: 'Externo' };
 
 export function QuoteDetail({ id }) {
   const [quote, setQuote] = useState(null);
@@ -61,7 +61,11 @@ export function QuoteDetail({ id }) {
     setActionLoading(status);
     try {
       await quotesApi.changeStatus(id, status);
-      await load();
+      const res = await quotesApi.getById(id);
+      setQuote(res.data);
+      if (status === 'EN_REVISION') {
+        await quotesApi.downloadPdf(id, res.data.number + '.pdf');
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -72,23 +76,30 @@ export function QuoteDetail({ id }) {
   if (loading) return <p className="page-loading">Cargando cotización...</p>;
   if (!quote) return <p className="page-loading">Cotización no encontrada.</p>;
 
+  // Calcular desde ítems para garantizar valores correctos en cotizaciones previas
+  const icoBase   = (quote.items || []).filter(i => i.category === 'AB').reduce((s, i) => s + (i.total || 0), 0);
+  const ivaBase   = (quote.subtotal || 0) - icoBase;
+  const ivaAmount = quote.ivaAmount > 0 ? quote.ivaAmount : Math.round(ivaBase * (quote.taxRate || 0.19) * 100) / 100;
+  const icoAmount = quote.icoAmount > 0 ? quote.icoAmount : Math.round(icoBase * 0.08 * 100) / 100;
+
   const nextStatuses = NEXT_STATUSES[quote.status] || [];
 
   return (
     <div className="page-container">
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      <div className="page-header">
+      <div className="page-filters">
         <div>
-          <h1 className="page-title">{quote.number}</h1>
-          <span className={`badge badge-${STATUS_VARIANT[quote.status] || 'neutral'}`} style={{ marginTop: 4 }}>
+          <strong style={{ fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>{quote.number}</strong>
+          <span className={`badge badge-${STATUS_VARIANT[quote.status] || 'neutral'}`} style={{ marginLeft: 'var(--space-2)' }}>
             {STATUS_LABELS[quote.status]}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', marginLeft: 'auto' }}>
           {quote.status === 'BORRADOR' && (
             <Button variant="secondary" onClick={() => setShowEdit(true)}>Editar</Button>
           )}
+          <Button variant="secondary" onClick={() => quotesApi.downloadPdf(id, quote.number + '.pdf').catch(() => {})}>Descargar PDF</Button>
           {nextStatuses.map(ns => (
             <Button
               key={ns.value}
@@ -175,8 +186,12 @@ export function QuoteDetail({ id }) {
                   <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(quote.subtotal)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>IVA ({Math.round(quote.taxRate * 100)}%)</td>
-                  <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(quote.taxAmount)}</td>
+                  <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>IVA ({Math.round((quote.taxRate || 0.19) * 100)}%)</td>
+                  <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(ivaAmount)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>ICO — A&B (8%)</td>
+                  <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(icoAmount)}</td>
                 </tr>
                 <tr style={{ background: 'var(--color-gold-subtle)' }}>
                   <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)' }}>TOTAL</td>

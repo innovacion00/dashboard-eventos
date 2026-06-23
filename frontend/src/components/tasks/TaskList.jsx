@@ -85,16 +85,12 @@ export function TaskList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Tareas</h1>
-        <Button onClick={() => { setEditing(null); setModal(true); }}>Nueva tarea</Button>
-      </div>
-
       <div className="page-filters">
         <select className="input-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ maxWidth: 180 }}>
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setModal(true); }}>Nueva tarea</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}

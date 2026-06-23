@@ -1,0 +1,10 @@
+---
+import Layout from '../../components/layout/Layout.astro';
+import { SurveyDetail } from '../../components/surveys/SurveyDetail.jsx';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Detalle de Encuesta">
+  <SurveyDetail id={id} client:load />
+</Layout>

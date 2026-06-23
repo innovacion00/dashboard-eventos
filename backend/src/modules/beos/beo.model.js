@@ -41,11 +41,15 @@ const supplierSchema = new mongoose.Schema({
 const beoSchema = new mongoose.Schema(
   {
     number: { type: String, unique: true },
-    eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true, unique: true },
+    eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
+    category: { type: String, enum: ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'] },
     setup: { type: setupSchema, default: () => ({}) },
     menu: [menuItemSchema],
+    menuNotes: { type: String },
     audiovisual: [avItemSchema],
+    avNotes: { type: String },
     personnel: [personnelSchema],
+    personnelNotes: { type: String },
     suppliers: [supplierSchema],
     generalNotes: { type: String },
     status: { type: String, enum: BEO_STATUSES, default: 'BORRADOR' },
@@ -57,6 +61,7 @@ const beoSchema = new mongoose.Schema(
 );
 
 beoSchema.index({ eventId: 1 });
+beoSchema.index({ eventId: 1, category: 1 });
 
 beoSchema.pre('save', async function (next) {
   if (this.isNew && !this.number) {

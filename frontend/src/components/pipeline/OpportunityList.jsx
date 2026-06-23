@@ -62,6 +62,7 @@ const COLUMNS = [
 export function OpportunityList() {
   const [opps, setOpps] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
@@ -72,7 +73,7 @@ export function OpportunityList() {
   const load = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page, limit: 20 };
       if (stageFilter) params.stage = stageFilter;
       if (search) params.q = search;
       const res = await opportunitiesApi.list(params);
@@ -85,7 +86,8 @@ export function OpportunityList() {
     }
   };
 
-  useEffect(() => { load(); }, [stageFilter, search]);
+  useEffect(() => { setPage(1); }, [stageFilter, search]);
+  useEffect(() => { load(); }, [page, stageFilter, search]);
 
   const handleEdit = (opp) => { setSelected(opp); setModal('edit'); };
   const handleStage = (opp) => { setSelected(opp); setModal('stage'); };
@@ -98,11 +100,6 @@ export function OpportunityList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Pipeline de oportunidades</h1>
-        <Button onClick={() => { setSelected(null); setModal('new'); }}>Nueva oportunidad</Button>
-      </div>
-
       <div className="page-filters">
         <input
           className="input-control"
@@ -115,13 +112,25 @@ export function OpportunityList() {
           <option value="">Todas las etapas</option>
           {Object.entries(STAGE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => { setSelected(null); setModal('new'); }}>Nueva oportunidad</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <Table columns={columns} rows={opps} loading={loading} emptyText="No hay oportunidades" />
 
-      {meta && <p className="table-meta">Mostrando {opps.length} de {meta.total}</p>}
+      {meta && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-3)' }}>
+          <p className="table-meta" style={{ margin: 0 }}>Mostrando {opps.length} de {meta.total}</p>
+          {meta.totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Button variant="secondary" onClick={() => setPage(p => p - 1)} disabled={page <= 1 || loading}>Anterior</Button>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Página {page} de {meta.totalPages}</span>
+              <Button variant="secondary" onClick={() => setPage(p => p + 1)} disabled={page >= meta.totalPages || loading}>Siguiente</Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal open={modal === 'new' || modal === 'edit'} title={modal === 'edit' ? 'Editar oportunidad' : 'Nueva oportunidad'} onClose={() => setModal(null)} size="lg">
         <OpportunityForm initial={selected} onSaved={() => { setModal(null); load(); }} onCancel={() => setModal(null)} />

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const ITEM_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS'];
+const ITEM_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
 const QUOTE_STATUSES = ['BORRADOR', 'EN_REVISION', 'APROBADA', 'RECHAZADA', 'VENCIDA'];
 
 const lineItemSchema = z.object({

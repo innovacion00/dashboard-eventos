@@ -1,0 +1,30 @@
+---
+import { PublicSurveyForm } from '../../components/surveys/PublicSurveyForm.jsx';
+
+const { token } = Astro.params;
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encuesta — Hotel Windsor House</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: linear-gradient(135deg, #A17C2D 0%, #C8A350 50%, #A17C2D 100%);
+      padding: 40px 20px;
+    }
+  </style>
+</head>
+<body>
+  <PublicSurveyForm token={token} client:load />
+</body>
+</html>

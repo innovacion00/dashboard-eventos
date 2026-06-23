@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { quotesApi } from '../../lib/api/quotes.api.js';
 import { companiesApi } from '../../lib/api/companies.api.js';
-import { opportunitiesApi } from '../../lib/api/opportunities.api.js';
 import { roomsApi } from '../../lib/api/rooms.api.js';
 import { servicesApi } from '../../lib/api/services.api.js';
+import { catalogsApi } from '../../lib/api/catalogs.api.js';
 import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { formatCurrency } from '../../lib/utils/format.js';
 
-const ITEM_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS'];
-const EMPTY_ITEM = { description: '', category: 'OTROS', serviceId: '', quantity: 1, unitPrice: 0 };
+const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', EXTERNO: 'Externo' };
+const CATEGORY_KEYS = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
 
 export function QuoteForm({ quoteId, onSaved, onCancel }) {
   const isEdit = Boolean(quoteId);
@@ -25,12 +25,14 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     taxRate: 0.19,
     notes: '',
     internalNotes: '',
-    items: [],
   });
+  // { [serviceId]: { quantity, unitPrice, category } }
+  const [selections, setSelections] = useState({});
   const [companies, setCompanies] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [services, setServices] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,10 +41,12 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
       companiesApi.list({ limit: 200 }),
       roomsApi.list(),
       servicesApi.list({ limit: 200 }),
-    ]).then(([c, r, s]) => {
+      catalogsApi.list('EVENT_TYPE'),
+    ]).then(([c, r, s, et]) => {
       setCompanies(c.data || []);
       setRooms(r.data || []);
       setServices(s.data || []);
+      setEventTypes(et.data || []);
     }).catch(() => {});
   }, []);
 
@@ -58,45 +62,79 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     if (isEdit) {
       quotesApi.getById(quoteId).then(res => {
         const q = res.data;
+        const companyId = q.company?.id || q.company?._id || q.company || '';
+        const oppId = q.opportunityId?.id || q.opportunityId?._id || q.opportunityId || '';
+        const roomId = q.room?.id || q.room?._id || q.room || '';
         setForm({
-          opportunityId: q.opportunityId || '',
-          companyId: q.company?.id || '',
+          opportunityId: String(oppId),
+          companyId: String(companyId),
           eventDate: q.eventDate ? q.eventDate.slice(0, 10) : '',
           validUntil: q.validUntil ? q.validUntil.slice(0, 10) : '',
           eventType: q.eventType || '',
-          roomId: q.room?.id || '',
+          roomId: String(roomId),
           attendees: q.attendees || '',
           taxRate: q.taxRate ?? 0.19,
           notes: q.notes || '',
           internalNotes: q.internalNotes || '',
-          items: q.items.map(i => ({
-            description: i.description,
-            category: i.category,
-            serviceId: i.service?.id || '',
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-          })),
         });
+        const newSel = {};
+        (q.items || []).forEach(i => {
+          const svcId = i.service?.id || i.service?._id || i.service;
+          if (svcId) {
+            newSel[String(svcId)] = { quantity: i.quantity, unitPrice: i.unitPrice, category: i.category };
+          }
+        });
+        setSelections(newSel);
       }).catch(() => {});
     }
   }, [quoteId]);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const setItem = (idx, field, value) => {
-    setForm(f => {
-      const items = [...f.items];
-      items[idx] = { ...items[idx], [field]: value };
-      return { ...f, items };
+  const toggleService = (svc) => {
+    const svcId = String(svc._id || svc.id);
+    setSelections(prev => {
+      if (prev[svcId]) {
+        const next = { ...prev };
+        delete next[svcId];
+        return next;
+      }
+      return { ...prev, [svcId]: { quantity: 1, unitPrice: svc.unitPrice, category: svc.category } };
     });
   };
 
-  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { ...EMPTY_ITEM }] }));
-  const removeItem = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+  const updateSel = (svcId, field, value) =>
+    setSelections(prev => ({ ...prev, [svcId]: { ...prev[svcId], [field]: value } }));
 
-  const subtotal = form.items.reduce((s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0), 0);
-  const taxAmount = subtotal * (Number(form.taxRate) || 0);
-  const total = subtotal + taxAmount;
+  const servicesByCategory = services.reduce((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = [];
+    acc[s.category].push(s);
+    return acc;
+  }, {});
+
+  const getItems = () =>
+    services
+      .filter(s => selections[String(s._id || s.id)])
+      .map(s => {
+        const svcId = String(s._id || s.id);
+        const sel = selections[svcId];
+        return {
+          description: s.name,
+          category: s.category,
+          serviceId: svcId,
+          quantity: Number(sel.quantity) || 1,
+          unitPrice: Number(sel.unitPrice) || 0,
+        };
+      });
+
+  const items = getItems();
+  const subtotal  = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const icoBase   = items.filter(i => i.category === 'AB').reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const ivaBase   = subtotal - icoBase;
+  const ivaAmount = Math.round(ivaBase * (Number(form.taxRate) || 0.19) * 100) / 100;
+  const icoAmount = Math.round(icoBase * 0.08 * 100) / 100;
+  const taxAmount = ivaAmount + icoAmount;
+  const total     = subtotal + taxAmount;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,13 +146,7 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         attendees: form.attendees ? Number(form.attendees) : undefined,
         eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : undefined,
         validUntil: form.validUntil ? new Date(form.validUntil).toISOString() : undefined,
-        items: form.items.map(i => ({
-          description: i.description,
-          category: i.category,
-          serviceId: i.serviceId || undefined,
-          quantity: Number(i.quantity),
-          unitPrice: Number(i.unitPrice),
-        })),
+        items,
       };
       if (isEdit) {
         await quotesApi.update(quoteId, payload);
@@ -145,7 +177,7 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           <label className="input-label">Oportunidad</label>
           <select className="input-control" value={form.opportunityId} onChange={e => set('opportunityId', e.target.value)}>
             <option value="">Ninguna</option>
-            {opportunities.map(o => <option key={o._id || o.id} value={o._id || o.id}>{o.eventType || o._id}</option>)}
+            {opportunities.map(o => <option key={o._id || o.id} value={o._id || o.id}>{o.eventType || String(o._id || o.id)}</option>)}
           </select>
         </div>
         <div className="input-field">
@@ -158,13 +190,16 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         </div>
         <div className="input-field">
           <label className="input-label">Tipo de evento</label>
-          <input className="input-control" value={form.eventType} onChange={e => set('eventType', e.target.value)} />
+          <select className="input-control" value={form.eventType} onChange={e => set('eventType', e.target.value)}>
+            <option value="">Sin tipo</option>
+            {eventTypes.map(et => <option key={et.code} value={et.label}>{et.label}</option>)}
+          </select>
         </div>
         <div className="input-field">
           <label className="input-label">Salón</label>
           <select className="input-control" value={form.roomId} onChange={e => set('roomId', e.target.value)}>
             <option value="">Sin salón</option>
-            {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {rooms.map(r => <option key={String(r._id || r.id)} value={String(r._id || r.id)}>{r.name}</option>)}
           </select>
         </div>
         <div className="input-field">
@@ -179,58 +214,115 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         </div>
       </div>
 
-      {/* Líneas */}
       <div style={{ margin: 'var(--space-5) 0 var(--space-3)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-          <strong style={{ fontSize: 'var(--text-sm)' }}>Ítems de la cotización</strong>
-          <Button type="button" variant="secondary" onClick={addItem}>+ Agregar ítem</Button>
-        </div>
+        <strong style={{ fontSize: 'var(--text-sm)', display: 'block', marginBottom: 'var(--space-4)' }}>
+          Ítems de la cotización
+        </strong>
 
-        {form.items.length === 0 && (
-          <p className="text-muted" style={{ textAlign: 'center', padding: 'var(--space-4)' }}>
-            No hay ítems. Haz clic en "Agregar ítem".
-          </p>
-        )}
+        {CATEGORY_KEYS.map(cat => {
+          const catServices = servicesByCategory[cat] || [];
+          if (catServices.length === 0) return null;
 
-        {form.items.map((item, idx) => (
-          <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 'var(--space-2)', alignItems: 'end', marginBottom: 'var(--space-2)' }}>
-            <div className="input-field" style={{ marginBottom: 0 }}>
-              {idx === 0 && <label className="input-label">Descripción</label>}
-              <input className="input-control" placeholder="Descripción" value={item.description}
-                onChange={e => setItem(idx, 'description', e.target.value)} required />
-            </div>
-            <div className="input-field" style={{ marginBottom: 0 }}>
-              {idx === 0 && <label className="input-label">Categoría</label>}
-              <select className="input-control" value={item.category} onChange={e => setItem(idx, 'category', e.target.value)}>
-                {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="input-field" style={{ marginBottom: 0 }}>
-              {idx === 0 && <label className="input-label">Cantidad</label>}
-              <input className="input-control" type="number" min="1" value={item.quantity}
-                onChange={e => setItem(idx, 'quantity', e.target.value)} />
-            </div>
-            <div className="input-field" style={{ marginBottom: 0 }}>
-              {idx === 0 && <label className="input-label">Precio unit.</label>}
-              <input className="input-control" type="number" min="0" step="1000" value={item.unitPrice}
-                onChange={e => setItem(idx, 'unitPrice', e.target.value)} />
-            </div>
-            <button type="button" className="link-btn link-btn--danger"
-              style={{ marginBottom: 'var(--space-1)', paddingBottom: 'var(--space-2)' }}
-              onClick={() => removeItem(idx)}>✕</button>
-          </div>
-        ))}
+          return (
+            <div key={cat} style={{
+              marginBottom: 'var(--space-4)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: 'var(--space-2) var(--space-4)',
+                background: 'var(--color-gray-1)',
+                fontWeight: 'var(--font-semibold)',
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-gold-dark)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                borderBottom: '1px solid var(--color-border)',
+              }}>
+                {CATEGORY_LABELS[cat]}
+              </div>
 
-        {form.items.length > 0 && (
-          <div style={{ textAlign: 'right', marginTop: 'var(--space-4)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
-            <div>Subtotal: <strong>{formatCurrency(subtotal)}</strong></div>
-            <div>IVA ({Math.round(form.taxRate * 100)}%): <strong>{formatCurrency(taxAmount)}</strong></div>
-            <div style={{ fontSize: 'var(--text-base)' }}>
-              <strong>Total: {formatCurrency(total)}</strong>
+              <div style={{ padding: 'var(--space-3) var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                {catServices.map(svc => {
+                  const svcId = String(svc._id || svc.id);
+                  const sel = selections[svcId];
+                  const isChecked = Boolean(sel);
+
+                  return (
+                    <div key={svcId}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        cursor: 'pointer',
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-sm)',
+                        background: isChecked ? 'var(--color-gold-subtle)' : 'transparent',
+                        border: `1px solid ${isChecked ? 'var(--color-gold-dark)' : 'transparent'}`,
+                        transition: 'background 0.15s',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleService(svc)}
+                          style={{ accentColor: 'var(--color-gold-dark)', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+                        />
+                        <span style={{ flex: 1, fontSize: 'var(--text-sm)' }}>{svc.name}</span>
+                        {svc.description && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginRight: 'var(--space-2)' }}>
+                            {svc.description}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 'var(--font-medium)' }}>
+                          {formatCurrency(svc.unitPrice)} / {svc.unit || 'unidad'}
+                        </span>
+                      </label>
+
+                      {isChecked && (
+                        <div style={{
+                          display: 'flex',
+                          gap: 'var(--space-3)',
+                          alignItems: 'flex-end',
+                          flexWrap: 'wrap',
+                          padding: 'var(--space-2) var(--space-3) var(--space-3) calc(var(--space-3) + 28px)',
+                        }}>
+                          <div className="input-field" style={{ marginBottom: 0, minWidth: 100 }}>
+                            <label className="input-label">Cantidad</label>
+                            <input className="input-control" type="number" min="1"
+                              value={sel.quantity}
+                              onChange={e => updateSel(svcId, 'quantity', e.target.value)} />
+                          </div>
+                          <div className="input-field" style={{ marginBottom: 0, minWidth: 160 }}>
+                            <label className="input-label">Precio unitario</label>
+                            <input className="input-control" type="number" min="0" step="any"
+                              value={sel.unitPrice}
+                              onChange={e => updateSel(svcId, 'unitPrice', e.target.value)} />
+                          </div>
+                          <div style={{ paddingBottom: 'var(--space-1)', fontSize: 'var(--text-sm)', whiteSpace: 'nowrap' }}>
+                            Subtotal: <strong>{formatCurrency((Number(sel.quantity) || 0) * (Number(sel.unitPrice) || 0))}</strong>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {items.length > 0 && (
+        <div style={{ textAlign: 'right', marginBottom: 'var(--space-5)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
+          <div>Subtotal: <strong>{formatCurrency(subtotal)}</strong></div>
+          <div>IVA ({Math.round((form.taxRate || 0.19) * 100)}%): <strong>{formatCurrency(ivaAmount)}</strong></div>
+          {icoAmount > 0 && <div>ICO — A&B (8%): <strong>{formatCurrency(icoAmount)}</strong></div>}
+          <div style={{ fontSize: 'var(--text-base)' }}>
+            <strong>Total: {formatCurrency(total)}</strong>
+          </div>
+        </div>
+      )}
 
       <div className="input-field">
         <label className="input-label">Notas para el cliente</label>

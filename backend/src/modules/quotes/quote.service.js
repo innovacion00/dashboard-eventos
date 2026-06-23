@@ -1,7 +1,9 @@
 import { quoteRepository } from './quote.repository.js';
+import { eventService } from '../events/event.service.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
+import { logger } from '../../config/logger.js';
 
 const VALID_TRANSITIONS = {
   BORRADOR: ['EN_REVISION', 'VENCIDA'],
@@ -44,8 +46,8 @@ export const quoteService = {
   async updateQuote(id, data, requestingUser, req) {
     const quote = await quoteRepository.findById(id);
     if (!quote || !quote.active) throw new NotFoundError('Cotización no encontrada');
-    if (quote.status !== 'BORRADOR') {
-      throw new AppError('Solo se pueden editar cotizaciones en borrador', 409, 'INVALID_STATE');
+    if (quote.status !== 'BORRADOR' && quote.status !== 'APROBADA') {
+      throw new AppError('Solo se pueden editar cotizaciones en borrador o aprobadas', 409, 'INVALID_STATE');
     }
 
     const before = { total: quote.total, status: quote.status };
@@ -91,6 +93,14 @@ export const quoteService = {
       after: { status: newStatus },
       req,
     });
+
+    if (newStatus === 'APROBADA') {
+      try {
+        await eventService.createFromQuote(quote, requestingUser, req);
+      } catch (err) {
+        logger.error({ err, quoteId: id }, 'Error al crear evento desde cotización aprobada');
+      }
+    }
 
     return quoteRepository.findById(id);
   },

@@ -42,18 +42,15 @@ export function DashboardPanel() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Dashboard ejecutivo</h1>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <select className="input-control" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ maxWidth: 90 }}>
-            {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <select className="input-control" value={month} onChange={(e) => setMonth(Number(e.target.value))} style={{ maxWidth: 140 }}>
-            {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
-          </select>
-        </div>
+      <div className="page-filters">
+        <select className="input-control" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ maxWidth: 90 }}>
+          {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+        <select className="input-control" value={month} onChange={(e) => setMonth(Number(e.target.value))} style={{ maxWidth: 140 }}>
+          {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+        </select>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}

@@ -6,7 +6,7 @@ import { Alert } from '../ui/Alert.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { formatCurrency } from '../../lib/utils/format.js';
 
-const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros' };
+const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', EXTERNO: 'Externo' };
 const CATEGORIES = Object.entries(CATEGORY_LABELS);
 
 const TAX_RATE = (category) => category === 'AB' ? 8 : 19;
@@ -103,6 +103,7 @@ function ServiceForm({ service, onSaved, onCancel }) {
 export function ServiceList() {
   const [services, setServices] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -112,7 +113,7 @@ export function ServiceList() {
   const load = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page, limit: 20 };
       if (categoryFilter) params.category = categoryFilter;
       const res = await servicesApi.list(params);
       setServices(res.data);
@@ -124,7 +125,8 @@ export function ServiceList() {
     }
   };
 
-  useEffect(() => { load(); }, [categoryFilter]);
+  useEffect(() => { setPage(1); }, [categoryFilter]);
+  useEffect(() => { load(); }, [page, categoryFilter]);
 
   const cols = [
     ...COLUMNS,
@@ -138,23 +140,30 @@ export function ServiceList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Catálogo de servicios</h1>
-        <Button onClick={() => { setEditing(null); setShowModal(true); }}>Nuevo servicio</Button>
-      </div>
-
       <div className="page-filters">
         <select className="input-control" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ maxWidth: 180 }}>
           <option value="">Todas las categorías</option>
           {CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setShowModal(true); }}>Nuevo servicio</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <Table columns={cols} rows={services} loading={loading} emptyText="No hay servicios registrados" />
 
-      {meta && <p className="table-meta">Mostrando {services.length} de {meta.total}</p>}
+      {meta && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-3)' }}>
+          <p className="table-meta" style={{ margin: 0 }}>Mostrando {services.length} de {meta.total}</p>
+          {meta.totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Button variant="secondary" onClick={() => setPage(p => p - 1)} disabled={page <= 1 || loading}>Anterior</Button>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Página {page} de {meta.totalPages}</span>
+              <Button variant="secondary" onClick={() => setPage(p => p + 1)} disabled={page >= meta.totalPages || loading}>Siguiente</Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal
         open={showModal}

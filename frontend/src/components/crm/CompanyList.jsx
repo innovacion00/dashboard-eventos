@@ -30,6 +30,7 @@ const COLUMNS = [
 export function CompanyList() {
   const [companies, setCompanies] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [page, setPage] = useState(1);
   const [segments, setSegments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,7 +46,7 @@ export function CompanyList() {
   const load = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page, limit: 20 };
       if (search) params.q = search;
       if (statusFilter) params.status = statusFilter;
       if (segmentFilter) params.segment = segmentFilter;
@@ -59,18 +60,11 @@ export function CompanyList() {
     }
   };
 
-  useEffect(() => { load(); }, [search, statusFilter, segmentFilter]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, segmentFilter]);
+  useEffect(() => { load(); }, [page, search, statusFilter, segmentFilter]);
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Empresas</h1>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <CompanyImport onImported={load} />
-          <Button onClick={() => setShowModal(true)}>Nueva empresa</Button>
-        </div>
-      </div>
-
       <div className="page-filters">
         <input
           className="input-control"
@@ -99,13 +93,28 @@ export function CompanyList() {
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          <CompanyImport onImported={load} />
+          <Button onClick={() => setShowModal(true)}>Nueva empresa</Button>
+        </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <Table columns={COLUMNS} rows={companies} loading={loading} emptyText="No hay empresas registradas" />
 
-      {meta && <p className="table-meta">Mostrando {companies.length} de {meta.total}</p>}
+      {meta && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-3)' }}>
+          <p className="table-meta" style={{ margin: 0 }}>Mostrando {companies.length} de {meta.total}</p>
+          {meta.totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Button variant="secondary" onClick={() => setPage(p => p - 1)} disabled={page <= 1 || loading}>Anterior</Button>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Página {page} de {meta.totalPages}</span>
+              <Button variant="secondary" onClick={() => setPage(p => p + 1)} disabled={page >= meta.totalPages || loading}>Siguiente</Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal open={showModal} title="Nueva empresa" onClose={() => setShowModal(false)}>
         <CompanyForm onSaved={() => { setShowModal(false); load(); }} onCancel={() => setShowModal(false)} />

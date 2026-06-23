@@ -2,6 +2,9 @@ import { eventRepository } from './event.repository.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
+import { notify } from '../notifications/notification.service.js';
+import { beoService } from '../beos/beo.service.js';
+import { logger } from '../../config/logger.js';
 
 export const eventService = {
   async listEvents(query) {
@@ -70,6 +73,48 @@ export const eventService = {
     return event;
   },
 
+  async createFromQuote(quote, requestingUser, req) {
+    const existing = await eventRepository.findByQuoteId(quote._id);
+    if (existing) return existing;
+
+    const companyId = quote.companyId?._id || quote.companyId;
+    const roomId = quote.roomId?._id || quote.roomId || undefined;
+    const opportunityId = quote.opportunityId?._id || quote.opportunityId || undefined;
+
+    const event = await eventRepository.create({
+      quoteId: quote._id,
+      opportunityId,
+      companyId,
+      ownerId: requestingUser.id,
+      name: `${quote.eventType || 'Evento'} — ${quote.number}`,
+      eventType: quote.eventType,
+      roomId,
+      eventDate: quote.eventDate || new Date(),
+      attendees: quote.attendees,
+      totalValue: quote.total || 0,
+      status: 'CONFIRMADO',
+      notes: quote.notes,
+    });
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'events',
+      action: 'CREATE',
+      entityId: event._id,
+      after: { number: event.number, source: 'auto-from-quote', quoteId: quote._id },
+      req,
+    });
+
+    try {
+      await beoService.createFromQuote(quote, event, requestingUser, req);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear BEOs desde cotización aprobada');
+    }
+
+    return event;
+  },
+
   async updateEvent(id, data, requestingUser, req) {
     const event = await eventRepository.findById(id);
     if (!event || !event.active) throw new NotFoundError('Evento no encontrado');
@@ -112,6 +157,16 @@ export const eventService = {
       after: { status: newStatus },
       req,
     });
+
+    if (event.ownerId) {
+      await notify({
+        userId: event.ownerId._id || event.ownerId,
+        type: 'EVENT_STATUS_CHANGED',
+        title: 'Estado del evento actualizado',
+        message: `El evento ${event.number} cambió a ${newStatus}.`,
+        actionUrl: `/eventos/${id}`,
+      });
+    }
 
     return eventRepository.findById(id);
   },

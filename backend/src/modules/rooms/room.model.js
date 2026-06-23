@@ -13,6 +13,7 @@ const roomSchema = new mongoose.Schema(
       banquet: { type: Number, min: 0 },
     },
     baseRate: { type: Number, min: 0 },
+    photos: [{ type: String }],
     active: { type: Boolean, default: true },
   },
   { timestamps: true, collection: 'rooms' }

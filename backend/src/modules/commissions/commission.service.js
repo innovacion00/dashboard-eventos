@@ -2,6 +2,7 @@ import { commissionRepository } from './commission.repository.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
+import { notify } from '../notifications/notification.service.js';
 
 const VALID_TRANSITIONS = {
   CALCULADA: ['APROBADA', 'ANULADA'],
@@ -87,6 +88,25 @@ export const commissionService = {
       after: { status: newStatus },
       req,
     });
+
+    if (newStatus === 'APROBADA' && com.beneficiaryId) {
+      await notify({
+        userId: com.beneficiaryId._id || com.beneficiaryId,
+        type: 'COMMISSION_APPROVED',
+        title: 'Comisión aprobada',
+        message: `Tu comisión ${com.number} ha sido aprobada.`,
+        actionUrl: '/comisiones',
+      });
+    }
+    if (newStatus === 'PAGADA' && com.beneficiaryId) {
+      await notify({
+        userId: com.beneficiaryId._id || com.beneficiaryId,
+        type: 'COMMISSION_PAID',
+        title: 'Comisión pagada',
+        message: `Tu comisión ${com.number} ha sido pagada.`,
+        actionUrl: '/comisiones',
+      });
+    }
 
     return updated;
   },

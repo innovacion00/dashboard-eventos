@@ -44,11 +44,7 @@ export function CommissionList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Comisiones</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>Nueva comisión</button>
-      </div>
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+      {error && <Alert type="error" message={error} onClose={() => setError('')} />
 
       {showForm && (
         <CommissionForm onSaved={() => { setShowForm(false); load(); }} onCancel={() => setShowForm(false)} />
@@ -59,6 +55,7 @@ export function CommissionList() {
           <option value="">Todos los estados</option>
           {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>
+        <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => setShowForm(true)}>Nueva comisión</button>
       </div>
 
       {loading ? (

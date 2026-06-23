@@ -1,0 +1,200 @@
+/* ── NPS Dashboard ────────────────────────────── */
+
+.nps-score {
+  font-size: 4rem;
+  font-weight: var(--font-bold);
+  text-align: center;
+  line-height: 1.1;
+  margin-bottom: var(--space-2);
+}
+
+.nps-score--positive {
+  color: var(--color-success);
+}
+
+.nps-score--neutral {
+  color: var(--color-gold-dark);
+}
+
+.nps-score--negative {
+  color: var(--color-danger);
+}
+
+.nps-label {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+.nps-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.nps-card {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  background: var(--color-surface);
+}
+
+.nps-card__value {
+  font-size: 2rem;
+  font-weight: var(--font-bold);
+  line-height: 1.2;
+}
+
+.nps-card__value--promoter {
+  color: #22c55e;
+}
+
+.nps-card__value--passive {
+  color: #eab308;
+}
+
+.nps-card__value--detractor {
+  color: #ef4444;
+}
+
+.nps-card__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.nps-card__percent {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.nps-bar {
+  display: flex;
+  height: 12px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.nps-bar__segment--promoter {
+  background: #22c55e;
+}
+
+.nps-bar__segment--passive {
+  background: #eab308;
+}
+
+.nps-bar__segment--detractor {
+  background: #ef4444;
+}
+
+.nps-total {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── Public link ─────────────────────────────── */
+
+.public-link {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  background: var(--color-gray-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  word-break: break-all;
+  font-size: var(--text-sm);
+  margin-top: var(--space-3);
+}
+
+.public-link__url {
+  flex: 1;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* ── Survey detail tabs ──────────────────────── */
+
+.survey-questions {
+  margin-top: var(--space-4);
+}
+
+.survey-question-item {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  background: var(--color-surface);
+}
+
+.survey-question-item__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.survey-question-item__order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-gold-dark);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  flex-shrink: 0;
+}
+
+.survey-question-item__type {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: var(--color-gray-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.survey-question-item__text {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  margin-left: calc(24px + var(--space-2));
+}
+
+.survey-question-item__options {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-left: calc(24px + var(--space-2));
+  margin-top: var(--space-1);
+}
+
+/* ── NPS empty state ─────────────────────────── */
+
+.nps-empty {
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.nps-empty__icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-3);
+}
+
+/* ── Responses table ─────────────────────────── */
+
+.response-answers {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

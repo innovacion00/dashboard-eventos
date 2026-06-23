@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const SERVICE_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS'];
+const SERVICE_CATEGORIES = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
 
 export const createServiceSchema = z.object({
   body: z.object({

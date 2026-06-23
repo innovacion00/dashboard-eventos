@@ -33,13 +33,6 @@ export function GoalView() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Metas comerciales</h1>
-        <Button onClick={() => setModal(goal ? 'edit' : 'new')}>
-          {goal ? 'Editar meta' : 'Crear meta'}
-        </Button>
-      </div>
-
       <div className="page-filters">
         <select className="input-control" value={year} onChange={(e) => setYear(Number(e.target.value))} style={{ maxWidth: 100 }}>
           {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => (
@@ -49,6 +42,9 @@ export function GoalView() {
         <select className="input-control" value={month} onChange={(e) => setMonth(Number(e.target.value))} style={{ maxWidth: 140 }}>
           {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => setModal(goal ? 'edit' : 'new')}>
+          {goal ? 'Editar meta' : 'Crear meta'}
+        </Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}

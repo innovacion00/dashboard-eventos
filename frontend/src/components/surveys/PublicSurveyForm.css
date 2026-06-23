@@ -1,0 +1,371 @@
+/* ── Public Survey Container ─────────────────── */
+
+.public-survey {
+  max-width: 680px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .public-survey {
+    padding: 24px 20px;
+    border-radius: 8px;
+  }
+}
+
+/* ── Brand Header ────────────────────────────── */
+
+.public-survey__brand {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0e8d8;
+}
+
+.public-survey__brand h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #A17C2D;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.public-survey__brand p {
+  font-size: 0.875rem;
+  color: #999;
+  margin: 0;
+}
+
+/* ── Title & Description ─────────────────────── */
+
+.public-survey__title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+  color: #2a2a2a;
+  margin-bottom: 8px;
+}
+
+.public-survey__description {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* ── Questions ───────────────────────────────── */
+
+.public-survey__question {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.public-survey__question:last-of-type {
+  border-bottom: none;
+}
+
+.public-survey__question-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2a2a2a;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.public-survey__question-required {
+  color: #c0392b;
+  margin-left: 4px;
+}
+
+/* ── NPS Scale ───────────────────────────────── */
+
+.nps-scale {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.nps-scale__btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 200ms ease;
+  background: #fff;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: inherit;
+}
+
+.nps-scale__btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.nps-scale__btn--selected {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  border-color: transparent;
+}
+
+.nps-scale__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+/* ── Rating Stars ────────────────────────────── */
+
+.rating-stars {
+  display: flex;
+  gap: 8px;
+}
+
+.rating-star {
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: transform 150ms ease, color 150ms ease;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  color: #ddd;
+}
+
+.rating-star:hover {
+  transform: scale(1.15);
+}
+
+.rating-star--active {
+  color: #eab308;
+}
+
+/* ── Text Input ──────────────────────────────── */
+
+.public-survey__textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: border-color 200ms ease;
+  box-sizing: border-box;
+  color: #2a2a2a;
+}
+
+.public-survey__textarea:focus {
+  outline: none;
+  border-color: #A17C2D;
+  box-shadow: 0 0 0 3px rgba(161, 124, 45, 0.12);
+}
+
+/* ── Radio / Checkbox Options ────────────────── */
+
+.public-survey__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.public-survey__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #2a2a2a;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #eee;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.public-survey__option:hover {
+  background: #faf8f4;
+  border-color: #e0d6c4;
+}
+
+.public-survey__option input[type="radio"],
+.public-survey__option input[type="checkbox"] {
+  accent-color: #A17C2D;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ── Respondent Info ─────────────────────────── */
+
+.public-survey__respondent {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #f0e8d8;
+}
+
+.public-survey__respondent h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 16px;
+}
+
+.public-survey__respondent-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .public-survey__respondent-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.public-survey__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 200ms ease;
+  box-sizing: border-box;
+  color: #2a2a2a;
+}
+
+.public-survey__input:focus {
+  outline: none;
+  border-color: #A17C2D;
+  box-shadow: 0 0 0 3px rgba(161, 124, 45, 0.12);
+}
+
+.public-survey__input-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* ── Submit ──────────────────────────────────── */
+
+.public-survey__submit {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.public-survey__submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, #A17C2D 0%, #C8A350 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  min-width: 200px;
+}
+
+.public-survey__submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(161, 124, 45, 0.35);
+}
+
+.public-survey__submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Thank You ───────────────────────────────── */
+
+.thank-you {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.thank-you__icon {
+  font-size: 4rem;
+  color: #22c55e;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.thank-you__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a2a2a;
+  margin-bottom: 12px;
+}
+
+.thank-you__message {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ── Loading / Error States ──────────────────── */
+
+.public-survey__loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.public-survey__error {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.public-survey__error-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.public-survey__error-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 8px;
+}
+
+.public-survey__error-message {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+/* ── Validation Error ────────────────────────── */
+
+.public-survey__field-error {
+  font-size: 0.8rem;
+  color: #c0392b;
+  margin-top: 6px;
+}

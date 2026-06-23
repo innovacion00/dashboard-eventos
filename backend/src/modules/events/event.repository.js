@@ -41,6 +41,10 @@ export const eventRepository = {
     return Event.findOne({ opportunityId, active: true });
   },
 
+  async findByQuoteId(quoteId) {
+    return Event.findOne({ quoteId, active: true });
+  },
+
   async create(data) {
     const event = new Event(data);
     return event.save();

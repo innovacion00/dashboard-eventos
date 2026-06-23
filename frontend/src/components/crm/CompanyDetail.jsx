@@ -63,12 +63,12 @@ export function CompanyDetail({ companyId }) {
     <div className="page-container">
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      <div className="page-header">
+      <div className="page-filters">
         <div>
-          <h1 className="page-title">{company.name}</h1>
-          <span className="badge badge-neutral">{STATUS_LABELS[company.status] || company.status}</span>
+          <strong style={{ fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>{company.name}</strong>
+          <span className="badge badge-neutral" style={{ marginLeft: 'var(--space-2)' }}>{STATUS_LABELS[company.status] || company.status}</span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', marginLeft: 'auto' }}>
           <Button variant="secondary" onClick={() => setModal('activity')}>Registrar actividad</Button>
           <Button variant="secondary" onClick={() => setModal('contact')}>Nuevo contacto</Button>
           <Button onClick={() => setModal('edit')}>Editar empresa</Button>

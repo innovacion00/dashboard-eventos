@@ -12,7 +12,7 @@ export function formatCurrency(amount) {
 
 export function formatDate(date) {
   if (!date) return '—';
-  return new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date));
+  return new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(date));
 }
 
 export function formatDateTime(date) {

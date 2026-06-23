@@ -43,6 +43,7 @@ const COLUMNS = [
 export function EventList() {
   const [events, setEvents] = useState([]);
   const [meta, setMeta] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -51,7 +52,7 @@ export function EventList() {
   const load = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page, limit: 20 };
       if (statusFilter) params.status = statusFilter;
       const res = await eventsApi.list(params);
       setEvents(res.data);
@@ -63,15 +64,11 @@ export function EventList() {
     }
   };
 
-  useEffect(() => { load(); }, [statusFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => { load(); }, [page, statusFilter]);
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Eventos</h1>
-        <Button onClick={() => setShowModal(true)}>Nuevo evento</Button>
-      </div>
-
       <div className="page-filters">
         <select
           className="input-control"
@@ -82,13 +79,25 @@ export function EventList() {
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Button style={{ marginLeft: 'auto' }} onClick={() => setShowModal(true)}>Nuevo evento</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <Table columns={COLUMNS} rows={events} loading={loading} emptyText="No hay eventos registrados" />
 
-      {meta && <p className="table-meta">Mostrando {events.length} de {meta.total}</p>}
+      {meta && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-3)' }}>
+          <p className="table-meta" style={{ margin: 0 }}>Mostrando {events.length} de {meta.total}</p>
+          {meta.totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Button variant="secondary" onClick={() => setPage(p => p - 1)} disabled={page <= 1 || loading}>Anterior</Button>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>Página {page} de {meta.totalPages}</span>
+              <Button variant="secondary" onClick={() => setPage(p => p + 1)} disabled={page >= meta.totalPages || loading}>Siguiente</Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <Modal open={showModal} title="Nuevo evento" onClose={() => setShowModal(false)}>
         <EventForm

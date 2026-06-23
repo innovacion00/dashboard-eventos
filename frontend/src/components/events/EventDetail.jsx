@@ -4,6 +4,7 @@ import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { Modal } from '../ui/Modal.jsx';
 import { EventForm } from './EventForm.jsx';
+import { QuoteForm } from '../quotes/QuoteForm.jsx';
 import { BeoPanel } from '../beos/BeoPanel.jsx';
 import { EventCostsPanel } from '../event-costs/EventCostsPanel.jsx';
 import { formatDate, formatCurrency } from '../../lib/utils/format.js';
@@ -40,6 +41,7 @@ export function EventDetail({ id }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showEdit, setShowEdit] = useState(false);
+  const [showQuoteEdit, setShowQuoteEdit] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
 
   const load = async () => {
@@ -77,16 +79,21 @@ export function EventDetail({ id }) {
     <div className="page-container">
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      <div className="page-header">
+      <div className="page-filters">
         <div>
-          <h1 className="page-title">{event.number} — {event.name}</h1>
-          <span className={`badge badge-${STATUS_VARIANT[event.status] || 'neutral'}`} style={{ marginTop: 4 }}>
+          <strong style={{ fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>{event.number} — {event.name}</strong>
+          <span className={`badge badge-${STATUS_VARIANT[event.status] || 'neutral'}`} style={{ marginLeft: 'var(--space-2)' }}>
             {STATUS_LABELS[event.status]}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', marginLeft: 'auto' }}>
           {event.status !== 'CANCELADO' && event.status !== 'REALIZADO' && (
-            <Button variant="secondary" onClick={() => setShowEdit(true)}>Editar</Button>
+            <>
+              <Button variant="secondary" onClick={() => setShowEdit(true)}>Editar evento</Button>
+              {event.quote && (
+                <Button variant="secondary" onClick={() => setShowQuoteEdit(true)}>Editar cotización</Button>
+              )}
+            </>
           )}
           {nextStatuses.map(ns => (
             <Button
@@ -191,6 +198,16 @@ export function EventDetail({ id }) {
           onCancel={() => setShowEdit(false)}
         />
       </Modal>
+
+      {event.quote && showQuoteEdit && (
+        <Modal open={showQuoteEdit} title="Editar cotización" size="lg" onClose={() => setShowQuoteEdit(false)}>
+          <QuoteForm
+            quoteId={event.quote.id || event.quote._id}
+            onSaved={() => { setShowQuoteEdit(false); load(); }}
+            onCancel={() => setShowQuoteEdit(false)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

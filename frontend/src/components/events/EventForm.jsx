@@ -58,18 +58,26 @@ export function EventForm({ eventId, onSaved, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.companyId) { setError('Selecciona una empresa'); return; }
+    if (!form.name || form.name.length < 2) { setError('El nombre debe tener al menos 2 caracteres'); return; }
+    if (!form.eventDate) { setError('La fecha del evento es obligatoria'); return; }
     setLoading(true);
     setError('');
     try {
+      const attendeesNum = form.attendees !== '' ? Number(form.attendees) : undefined;
+      const totalValueNum = form.totalValue !== '' ? Number(form.totalValue) : undefined;
       const payload = {
-        ...form,
-        eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : undefined,
-        attendees: form.attendees ? Number(form.attendees) : undefined,
-        totalValue: form.totalValue ? Number(form.totalValue) : undefined,
+        companyId: form.companyId,
+        name: form.name,
+        eventType: form.eventType || undefined,
+        roomId: form.roomId || undefined,
+        eventDate: new Date(form.eventDate).toISOString(),
         startTime: form.startTime || undefined,
         endTime: form.endTime || undefined,
-        roomId: form.roomId || undefined,
+        attendees: attendeesNum && attendeesNum > 0 ? attendeesNum : undefined,
         setupType: form.setupType || undefined,
+        totalValue: totalValueNum !== undefined && totalValueNum >= 0 ? totalValueNum : undefined,
+        notes: form.notes || undefined,
       };
       if (isEdit) {
         await eventsApi.update(eventId, payload);
@@ -104,14 +112,14 @@ export function EventForm({ eventId, onSaved, onCancel }) {
           <label className="input-label">Tipo de evento</label>
           <select className="input-control" value={form.eventType} onChange={e => set('eventType', e.target.value)}>
             <option value="">Sin tipo</option>
-            {eventTypes.map(et => <option key={et.code} value={et.name}>{et.name}</option>)}
+            {eventTypes.map(et => <option key={et.code} value={et.label}>{et.label}</option>)}
           </select>
         </div>
         <div className="input-field">
           <label className="input-label">Salón</label>
           <select className="input-control" value={form.roomId} onChange={e => set('roomId', e.target.value)}>
             <option value="">Sin salón</option>
-            {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {rooms.map(r => <option key={String(r._id || r.id)} value={String(r._id || r.id)}>{r.name}</option>)}
           </select>
         </div>
         <div className="input-field">
@@ -139,7 +147,7 @@ export function EventForm({ eventId, onSaved, onCancel }) {
         </div>
         <div className="input-field">
           <label className="input-label">Valor total</label>
-          <input className="input-control" type="number" min="0" step="1000" value={form.totalValue} onChange={e => set('totalValue', e.target.value)} />
+          <input className="input-control" type="number" min="0" step="any" value={form.totalValue} onChange={e => set('totalValue', e.target.value)} />
         </div>
       </div>
 

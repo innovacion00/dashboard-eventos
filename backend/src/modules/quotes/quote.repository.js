@@ -25,7 +25,7 @@ export const quoteRepository = {
     return Quote.findById(id)
       .populate('companyId', 'name taxId')
       .populate('opportunityId', 'eventType estimatedValue stage')
-      .populate('roomId', 'name')
+      .populate('roomId', 'name photos description')
       .populate('createdBy', 'name email')
       .populate('approvedBy', 'name')
       .populate('items.serviceId', 'name unit');

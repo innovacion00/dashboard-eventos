@@ -103,14 +103,14 @@ export function InvoiceDetail({ id }) {
 
   return (
     <div className="page-container">
-      <div className="page-header">
+      <div className="page-filters">
         <div>
-          <h1 className="page-title">{invoice.number}</h1>
-          <span className={`badge badge-${STATUS_VARIANT[invoice.status]}`} style={{ marginTop: 4 }}>
+          <strong style={{ fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>{invoice.number}</strong>
+          <span className={`badge badge-${STATUS_VARIANT[invoice.status]}`} style={{ marginLeft: 'var(--space-2)' }}>
             {STATUS_LABEL[invoice.status]}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginLeft: 'auto' }}>
           {invoice.status === 'BORRADOR' && (
             <a href={`/facturas/${id}/editar`} className="btn btn-secondary">Editar</a>
           )}

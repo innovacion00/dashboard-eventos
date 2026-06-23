@@ -74,9 +74,8 @@ export function UserList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Usuarios</h1>
-        <Button onClick={handleNew}>Nuevo usuario</Button>
+      <div className="page-filters">
+        <Button style={{ marginLeft: 'auto' }} onClick={handleNew}>Nuevo usuario</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}

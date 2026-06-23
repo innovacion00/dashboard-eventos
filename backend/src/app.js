@@ -28,6 +28,8 @@ import { beoRouter } from './modules/beos/beo.routes.js';
 import { invoiceRouter } from './modules/invoices/invoice.routes.js';
 import { eventCostRouter } from './modules/event-costs/event-cost.routes.js';
 import { commissionRouter } from './modules/commissions/commission.routes.js';
+import { vendorRouter } from './modules/vendors/vendor.routes.js';
+import { surveyRouter } from './modules/surveys/survey.routes.js';
 
 const app = express();
 
@@ -56,6 +58,8 @@ app.use('/api/v1/beos', beoRouter);
 app.use('/api/v1/invoices', invoiceRouter);
 app.use('/api/v1/event-costs', eventCostRouter);
 app.use('/api/v1/commissions', commissionRouter);
+app.use('/api/v1/vendors', vendorRouter);
+app.use('/api/v1/surveys', surveyRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ success: true, data: { status: 'ok', env: env.NODE_ENV } });

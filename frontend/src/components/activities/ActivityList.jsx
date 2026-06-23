@@ -37,10 +37,7 @@ export function ActivityList() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Actividades comerciales</h1>
-      </div>
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+{error && <Alert type="error" message={error} onClose={() => setError('')} />}
       <Table columns={COLUMNS} rows={activities} loading={loading} emptyText="No hay actividades registradas" />
       {meta && <p className="table-meta">Mostrando {activities.length} de {meta.total}</p>}
     </div>

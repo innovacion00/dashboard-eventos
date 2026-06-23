@@ -15,6 +15,7 @@ router.use(authMiddleware);
 router.get('/', quoteController.list);
 router.post('/', validate(createQuoteSchema), quoteController.create);
 router.get('/:id', quoteController.getById);
+router.get('/:id/pdf', quoteController.downloadPdf);
 router.patch('/:id', validate(updateQuoteSchema), quoteController.update);
 router.patch('/:id/status', validate(changeQuoteStatusSchema), quoteController.changeStatus);
 router.delete('/:id', requireRole([DIRECCION_GENERAL, LIDER_COMERCIAL, ADMINISTRADOR]), quoteController.remove);
