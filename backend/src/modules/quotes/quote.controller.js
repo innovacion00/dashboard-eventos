@@ -58,6 +58,7 @@ function mapQuote(q) {
     status: q.status,
     validUntil: q.validUntil,
     eventDate: q.eventDate,
+    eventTime: q.eventTime,
     eventType: q.eventType,
     room: q.roomId,
     attendees: q.attendees,

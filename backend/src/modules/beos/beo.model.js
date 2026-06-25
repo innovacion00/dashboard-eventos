@@ -38,6 +38,20 @@ const supplierSchema = new mongoose.Schema({
   notes: { type: String },
 }, { _id: false });
 
+const PAYMENT_METHODS = ['TRANSFERENCIA', 'EFECTIVO', 'CHEQUE', 'TARJETA', 'OTRO'];
+
+const paymentEvidenceSchema = new mongoose.Schema({
+  amount: { type: Number, required: true, min: 0 },
+  method: { type: String, enum: PAYMENT_METHODS, default: 'TRANSFERENCIA' },
+  reference: { type: String, trim: true },
+  date: { type: Date, default: Date.now },
+  file: { type: String },
+  notes: { type: String },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+});
+
+export { PAYMENT_METHODS };
+
 const beoSchema = new mongoose.Schema(
   {
     number: { type: String, unique: true },
@@ -52,6 +66,7 @@ const beoSchema = new mongoose.Schema(
     personnelNotes: { type: String },
     suppliers: [supplierSchema],
     generalNotes: { type: String },
+    paymentEvidence: [paymentEvidenceSchema],
     status: { type: String, enum: BEO_STATUSES, default: 'BORRADOR' },
     issuedAt: { type: Date },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

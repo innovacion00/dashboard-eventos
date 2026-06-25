@@ -77,6 +77,8 @@ export function QuoteDetail({ id }) {
   if (!quote) return <p className="page-loading">Cotización no encontrada.</p>;
 
   // Calcular desde ítems para garantizar valores correctos en cotizaciones previas
+  const tipItem   = (quote.items || []).find(i => i.description === 'Propina' && i.category === 'AB');
+  const tipAmount = tipItem ? (tipItem.total || tipItem.unitPrice || 0) : 0;
   const icoBase   = (quote.items || []).filter(i => i.category === 'AB').reduce((s, i) => s + (i.total || 0), 0);
   const ivaBase   = (quote.subtotal || 0) - icoBase;
   const ivaAmount = quote.ivaAmount > 0 ? quote.ivaAmount : Math.round(ivaBase * (quote.taxRate || 0.19) * 100) / 100;
@@ -185,12 +187,18 @@ export function QuoteDetail({ id }) {
                   <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>Subtotal</td>
                   <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(quote.subtotal)}</td>
                 </tr>
+                {tipAmount > 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>Propina</td>
+                    <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(tipAmount)}</td>
+                  </tr>
+                )}
                 <tr>
                   <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>IVA ({Math.round((quote.taxRate || 0.19) * 100)}%)</td>
                   <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(ivaAmount)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>ICO — A&B (8%)</td>
+                  <td colSpan={4} style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-medium)' }}>ICO (8%)</td>
                   <td style={{ ...TD, textAlign: 'right' }}>{formatCurrency(icoAmount)}</td>
                 </tr>
                 <tr style={{ background: 'var(--color-gold-subtle)' }}>

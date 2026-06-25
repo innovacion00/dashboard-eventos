@@ -257,7 +257,7 @@ export function BeoPanel({ eventId }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="tabs" style={{ marginBottom: 0 }}>
-          {[['setup', 'Montaje'], ['menu', 'A&B'], ['audiovisual', 'AV'], ['personnel', 'Personal'], ['suppliers', 'Proveedores'], ['notes', 'Notas']].map(([t, l]) => (
+          {[['setup', 'Montaje'], ['menu', 'A&B'], ['audiovisual', 'AV'], ['personnel', 'Personal'], ['suppliers', 'Proveedores'], ['payments', 'Pagos'], ['notes', 'Notas']].map(([t, l]) => (
             <button key={t} className={`tab-btn ${tab === t ? 'tab-btn--active' : ''}`} onClick={() => setTab(t)}>{l}</button>
           ))}
         </div>
@@ -435,6 +435,11 @@ export function BeoPanel({ eventId }) {
         </div>
       )}
 
+      {/* Pagos */}
+      {tab === 'payments' && (
+        <BeoPayments beos={beos} onReload={load} />
+      )}
+
       {/* Notas */}
       {tab === 'notes' && draft && (
         <div>
@@ -486,3 +491,153 @@ function BeoItemList({ items, isLocked, onAdd, onRemove, onSet, services, showTi
     </div>
   );
 }
+
+const PAYMENT_METHODS = [
+  { value: 'TRANSFERENCIA', label: 'Transferencia' },
+  { value: 'EFECTIVO', label: 'Efectivo' },
+  { value: 'CHEQUE', label: 'Cheque' },
+  { value: 'TARJETA', label: 'Tarjeta' },
+  { value: 'OTRO', label: 'Otro' },
+];
+
+function BeoPayments({ beos, onReload }) {
+  const [showForm, setShowForm] = useState(false);
+  const [selectedBeo, setSelectedBeo] = useState('');
+  const [form, setForm] = useState({ amount: '', method: 'TRANSFERENCIA', reference: '', date: '', notes: '' });
+  const [file, setFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const allPayments = beos.flatMap(b =>
+    (b.paymentEvidence || []).map(p => ({ ...p, beoId: b.id, beoNumber: b.number, beoCategory: b.category }))
+  );
+
+  const CATEGORY_LABELS = { SALON: 'Montaje', AB: 'A&B', AV: 'AV', OTROS: 'Personal', EXTERNO: 'Externo' };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const beoId = selectedBeo || beos[0]?.id;
+    if (!beoId || !form.amount) return;
+    setSaving(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('amount', form.amount);
+      fd.append('method', form.method);
+      fd.append('reference', form.reference);
+      fd.append('date', form.date || new Date().toISOString());
+      fd.append('notes', form.notes);
+      if (file) fd.append('file', file);
+      await beosApi.addPayment(beoId, fd);
+      setForm({ amount: '', method: 'TRANSFERENCIA', reference: '', date: '', notes: '' });
+      setFile(null);
+      setShowForm(false);
+      await onReload();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemove = async (beoId, paymentId) => {
+    try {
+      await beosApi.removePayment(beoId, paymentId);
+      await onReload();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div>
+      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+
+      <Button variant="secondary" onClick={() => setShowForm(!showForm)} style={{ marginBottom: 'var(--space-3)' }}>
+        {showForm ? 'Cancelar' : '+ Registrar pago'}
+      </Button>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{ padding: 'var(--space-4)', background: 'var(--color-gray-1)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
+          <div className="form-grid-2">
+            <div className="input-field">
+              <label className="input-label">BEO</label>
+              <select className="input-control" value={selectedBeo} onChange={e => setSelectedBeo(e.target.value)}>
+                {beos.map(b => <option key={b.id} value={b.id}>{b.number} — {CATEGORY_LABELS[b.category] || b.category}</option>)}
+              </select>
+            </div>
+            <div className="input-field">
+              <label className="input-label">Monto <span className="input-required">*</span></label>
+              <input className="input-control" type="number" min="0" step="any" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} required />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Método de pago</label>
+              <select className="input-control" value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
+                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+            </div>
+            <div className="input-field">
+              <label className="input-label">Referencia</label>
+              <input className="input-control" value={form.reference} onChange={e => setForm(f => ({ ...f, reference: e.target.value }))} placeholder="N° de transacción" />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Fecha del pago</label>
+              <input className="input-control" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Comprobante (imagen o PDF)</label>
+              <input className="input-control" type="file" accept="image/*,.pdf" onChange={e => setFile(e.target.files[0] || null)} />
+            </div>
+          </div>
+          <div className="input-field">
+            <label className="input-label">Notas</label>
+            <input className="input-control" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+          </div>
+          <div className="form-actions">
+            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Registrar pago'}</Button>
+          </div>
+        </form>
+      )}
+
+      {allPayments.length === 0 && !showForm && <p className="text-muted">Sin evidencias de pago registradas.</p>}
+
+      {allPayments.length > 0 && (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+          <thead>
+            <tr style={{ background: 'var(--color-gray-1)' }}>
+              <th style={TH}>BEO</th>
+              <th style={TH}>Fecha</th>
+              <th style={TH}>Método</th>
+              <th style={TH}>Referencia</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Monto</th>
+              <th style={TH}>Comprobante</th>
+              <th style={TH}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {allPayments.map(p => (
+              <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <td style={TD}>{p.beoNumber}</td>
+                <td style={TD}>{p.date ? new Date(p.date).toLocaleDateString('es-CO') : '—'}</td>
+                <td style={TD}>{PAYMENT_METHODS.find(m => m.value === p.method)?.label || p.method}</td>
+                <td style={TD}>{p.reference || '—'}</td>
+                <td style={{ ...TD, textAlign: 'right', fontWeight: 'var(--font-semibold)' }}>
+                  {Number(p.amount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
+                </td>
+                <td style={TD}>
+                  {p.file ? <a href={`http://localhost:4000${p.file}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Ver</a> : '—'}
+                </td>
+                <td style={TD}>
+                  <button className="link-btn link-btn--danger" onClick={() => handleRemove(p.beoId, p.id)}>Eliminar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+const TH = { padding: '8px 12px', textAlign: 'left', fontWeight: 'var(--font-semibold)', borderBottom: '1px solid var(--color-border)' };
+const TD = { padding: '8px 12px', verticalAlign: 'middle' };

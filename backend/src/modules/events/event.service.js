@@ -1,10 +1,14 @@
 import { eventRepository } from './event.repository.js';
+import { opportunityRepository } from '../opportunities/opportunity.repository.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
 import { notify } from '../notifications/notification.service.js';
+import { sendEmail } from '../notifications/email.service.js';
 import { beoService } from '../beos/beo.service.js';
 import { logger } from '../../config/logger.js';
+
+const SURVEY_URL = 'https://b24-xz8e0u.bitrix24.site/eventos-formulario/';
 
 export const eventService = {
   async listEvents(query) {
@@ -166,6 +170,30 @@ export const eventService = {
         message: `El evento ${event.number} cambió a ${newStatus}.`,
         actionUrl: `/eventos/${id}`,
       });
+    }
+
+    if ((newStatus === 'REALIZADO' || newStatus === 'CANCELADO') && event.opportunityId) {
+      const oppStage = newStatus === 'REALIZADO' ? 'CONFIRMADO' : 'PERDIDO';
+      try {
+        const oppId = event.opportunityId._id || event.opportunityId;
+        await opportunityRepository.update(oppId, { stage: oppStage });
+      } catch (err) {
+        logger.error({ err, eventId: id }, `Error al cambiar oportunidad a ${oppStage}`);
+      }
+    }
+
+    if (newStatus === 'REALIZADO') {
+      const companyEmail = event.companyId?.email;
+      const companyName = event.companyId?.name || 'Cliente';
+      if (companyEmail) {
+        sendEmail({
+          to: companyEmail,
+          subject: `¿Cómo fue su experiencia? — ${event.name || event.number}`,
+          title: 'Encuesta de satisfacción',
+          message: `Estimado(a) ${companyName},<br><br>Esperamos que su evento <strong>${event.name || event.number}</strong> haya sido una excelente experiencia.<br><br>Nos encantaría conocer su opinión. Por favor, dedique unos minutos a completar nuestra encuesta de satisfacción:`,
+          actionUrl: SURVEY_URL,
+        }).catch(err => logger.error({ err, eventId: id }, 'Error al enviar encuesta post-evento'));
+      }
     }
 
     return eventRepository.findById(id);

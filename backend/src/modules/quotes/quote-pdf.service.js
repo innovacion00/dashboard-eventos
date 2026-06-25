@@ -2,9 +2,11 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { env } from '../../config/env.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const CONTACT_EMAIL = env.GMAIL_USER || 'eventoswindsor@gehsuites.com';
 
 const LOGO_PATH = path.join(__dirname, '../../assets/logo-windsor.png');
 const UPLOADS_DIR = path.join(__dirname, '../../../uploads');
@@ -51,15 +53,15 @@ const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', 
 const TERMS = [
   {
     title: 'Reserva del evento',
-    body: 'La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">eventos1@gehsuites.com</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.',
+    body: 'La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.',
   },
   {
     title: 'Forma de pago y garantía',
-    body: 'Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">eventos1@gehsuites.com</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.',
+    body: 'Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.',
   },
   {
     title: 'Política de cancelación',
-    body: 'La cancelación debe informarse por escrito a <strong style="color:#2A2723;">eventos1@gehsuites.com</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.',
+    body: 'La cancelación debe informarse por escrito a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.',
   },
   {
     title: 'Montaje y proveedores',
@@ -90,6 +92,8 @@ function buildHtml(quote) {
   const photoSrcs = roomPhotos.map(p => resolvePhotoSrc(p)).filter(Boolean);
 
   const items = quote.items || [];
+  const tipItem = items.find(i => i.description === 'Propina' && i.category === 'AB');
+  const tipAmount = tipItem ? (tipItem.total || tipItem.unitPrice || 0) : 0;
   const icoBase = items.filter(i => i.category === 'AB').reduce((s, i) => s + (i.total || 0), 0);
   const ivaBase = (quote.subtotal || 0) - icoBase;
   const ivaAmount = quote.ivaAmount > 0 ? quote.ivaAmount : Math.round(ivaBase * (quote.taxRate || 0.19));
@@ -178,7 +182,7 @@ function buildHtml(quote) {
   </div>
   <div class="footer" style="margin-top:32px;">
     <span>GEH Events Command Center — Hotel Windsor House</span>
-    <span>innovacion@gehsuites.com</span>
+    <span>${CONTACT_EMAIL}</span>
     <span>Página 1 de 3</span>
   </div>
 </section>
@@ -240,11 +244,14 @@ function buildHtml(quote) {
         <div style="display:flex; justify-content:space-between; padding:9px 4px; font-size:13px; color:#46423B; border-bottom:1px solid #EFE9DB;">
           <span>Subtotal</span><span style="font-variant-numeric:tabular-nums;">${formatCurrency(quote.subtotal)}</span>
         </div>
+        ${tipAmount > 0 ? `<div style="display:flex; justify-content:space-between; padding:9px 4px; font-size:13px; color:#46423B; border-bottom:1px solid #EFE9DB;">
+          <span>Propina</span><span style="font-variant-numeric:tabular-nums;">${formatCurrency(tipAmount)}</span>
+        </div>` : ''}
         <div style="display:flex; justify-content:space-between; padding:9px 4px; font-size:13px; color:#46423B; border-bottom:1px solid #EFE9DB;">
           <span>IVA (${taxPct}%)</span><span style="font-variant-numeric:tabular-nums;">${formatCurrency(ivaAmount)}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding:9px 4px; font-size:13px; color:#46423B; border-bottom:1px solid #EFE9DB;">
-          <span>ICO — A&amp;B (8%)</span><span style="font-variant-numeric:tabular-nums;">${formatCurrency(icoAmount)}</span>
+          <span>ICO (8%)</span><span style="font-variant-numeric:tabular-nums;">${formatCurrency(icoAmount)}</span>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 18px; margin-top:12px; background:#2A2723; border-radius:5px;">
           <span style="font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:#E7DCC0; font-weight:700;">Total</span>
@@ -255,7 +262,7 @@ function buildHtml(quote) {
   </div>
   <div class="footer" style="margin-top:32px;">
     <span>GEH Events Command Center — Hotel Windsor House</span>
-    <span>innovacion@gehsuites.com</span>
+    <span>${CONTACT_EMAIL}</span>
     <span>Página 2 de 3</span>
   </div>
 </section>
@@ -282,7 +289,7 @@ function buildHtml(quote) {
   </div>
   <div class="footer" style="margin-top:28px;">
     <span>GEH Events Command Center — Hotel Windsor House</span>
-    <span>innovacion@gehsuites.com</span>
+    <span>${CONTACT_EMAIL}</span>
     <span>Página 3 de 3</span>
   </div>
 </section>

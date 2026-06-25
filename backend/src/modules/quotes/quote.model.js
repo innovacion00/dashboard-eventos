@@ -21,6 +21,7 @@ const quoteSchema = new mongoose.Schema(
     status: { type: String, enum: QUOTE_STATUSES, default: 'BORRADOR' },
     validUntil: { type: Date },
     eventDate: { type: Date },
+    eventTime: { type: String },
     eventType: { type: String },
     roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
     attendees: { type: Number, min: 1 },

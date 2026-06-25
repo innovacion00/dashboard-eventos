@@ -3,6 +3,7 @@ import { STAGE_CODES } from '../../core/constants/stages.js';
 
 export const createOpportunitySchema = z.object({
   body: z.object({
+    name: z.string().optional(),
     companyId: z.string().min(1, 'La empresa es obligatoria'),
     eventType: z.string().optional(),
     segment: z.string().optional(),
@@ -20,6 +21,7 @@ export const createOpportunitySchema = z.object({
 
 export const updateOpportunitySchema = z.object({
   body: z.object({
+    name: z.string().optional(),
     eventType: z.string().optional(),
     segment: z.string().optional(),
     probableRoomId: z.string().optional().nullable(),

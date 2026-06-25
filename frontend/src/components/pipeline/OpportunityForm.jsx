@@ -21,6 +21,7 @@ const STAGE_OPTIONS = [
 
 export function OpportunityForm({ initial, onSaved, onCancel }) {
   const [form, setForm] = useState({
+    name: initial?.name || '',
     companyId: initial?.company?._id || initial?.company?.id || '',
     eventType: initial?.eventType || '',
     segment: initial?.segment || '',
@@ -69,6 +70,7 @@ export function OpportunityForm({ initial, onSaved, onCancel }) {
       setLoading(true);
       setApiError('');
       const payload = {
+        name: form.name || undefined,
         companyId: form.companyId,
         eventType: form.eventType,
         segment: form.segment || undefined,
@@ -96,6 +98,9 @@ export function OpportunityForm({ initial, onSaved, onCancel }) {
   return (
     <form onSubmit={handleSubmit} noValidate>
       {apiError && <Alert type="error" message={apiError} onClose={() => setApiError('')} />}
+      <div className="input-field">
+        <Input id="name" label="Nombre de la oportunidad" value={form.name} onChange={set('name')} placeholder="Ej: Boda familia Pérez" />
+      </div>
       <div className="form-grid-2">
         <Select id="companyId" label="Empresa" value={form.companyId} onChange={set('companyId')} options={companies} placeholder="Selecciona empresa" error={errors.companyId} required />
         <Select id="eventType" label="Tipo de evento" value={form.eventType} onChange={set('eventType')} options={eventTypes} placeholder="Selecciona tipo" error={errors.eventType} required />

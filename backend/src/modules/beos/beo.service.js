@@ -155,6 +155,46 @@ export const beoService = {
 
     return updated;
   },
+
+  async addPayment(id, paymentData, requestingUser, req) {
+    const beo = await beoRepository.findById(id);
+    if (!beo || !beo.active) throw new NotFoundError('BEO no encontrado');
+
+    beo.paymentEvidence.push(paymentData);
+    const updated = await beo.save();
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'beos',
+      action: 'UPDATE',
+      entityId: id,
+      after: { payment: paymentData.amount, reference: paymentData.reference },
+      req,
+    });
+
+    return beoRepository.findById(id);
+  },
+
+  async removePayment(id, paymentId, requestingUser, req) {
+    const beo = await beoRepository.findById(id);
+    if (!beo || !beo.active) throw new NotFoundError('BEO no encontrado');
+
+    beo.paymentEvidence.id(paymentId)?.deleteOne();
+    await beo.save();
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'beos',
+      action: 'UPDATE',
+      entityId: id,
+      after: { removedPaymentId: paymentId },
+      req,
+    });
+
+    return beoRepository.findById(id);
+  },
 };
 
 async function sendBeoToVendors(beoId, category) {

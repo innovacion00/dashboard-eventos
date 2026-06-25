@@ -2,6 +2,10 @@ import { Quote } from './quote.model.js';
 import { getPagination, buildMeta } from '../../core/utils/paginate.js';
 
 export const quoteRepository = {
+  async findByOpportunityId(opportunityId) {
+    return Quote.findOne({ opportunityId, active: true });
+  },
+
   async findAll(query) {
     const { page, limit, skip } = getPagination(query);
     const filter = { active: true };
@@ -23,7 +27,7 @@ export const quoteRepository = {
 
   async findById(id) {
     return Quote.findById(id)
-      .populate('companyId', 'name taxId')
+      .populate('companyId', 'name taxId email')
       .populate('opportunityId', 'eventType estimatedValue stage')
       .populate('roomId', 'name photos description')
       .populate('createdBy', 'name email')

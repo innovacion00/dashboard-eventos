@@ -151,6 +151,38 @@ export function DashboardPanel() {
               )}
             </section>
           </div>
+
+          {/* Ventas históricas por ejecutivo */}
+          {data.historicalSales && data.historicalSales.length > 0 && (
+            <section className="dashboard-section" style={{ marginTop: 'var(--space-4)' }}>
+              <h2 className="section-title">Ventas históricas por ejecutivo — {MONTHS[month - 1]} {year}</h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+                <thead>
+                  <tr style={{ background: 'var(--color-gray-1)' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 'var(--font-semibold)', borderBottom: '1px solid var(--color-border)' }}>Ejecutivo</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'var(--font-semibold)', borderBottom: '1px solid var(--color-border)' }}>Ventas confirmadas</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'var(--font-semibold)', borderBottom: '1px solid var(--color-border)' }}>Eventos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.historicalSales.map((h, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      <td style={{ padding: '8px 12px' }}>{h.executiveName}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'var(--font-semibold)' }}>{formatCurrency(h.confirmedSales)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>{h.confirmedEvents}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: 'var(--color-gold-subtle)' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 'var(--font-bold)' }}>Total</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'var(--font-bold)' }}>{formatCurrency(data.historicalTotal)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'var(--font-bold)' }}>{data.historicalSales.reduce((s, h) => s + (h.confirmedEvents || 0), 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </section>
+          )}
         </>
       ) : (
         <p className="text-muted">No hay datos para este período.</p>

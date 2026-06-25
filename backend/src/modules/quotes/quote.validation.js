@@ -17,6 +17,7 @@ export const createQuoteSchema = z.object({
     companyId: z.string().min(1, 'La empresa es obligatoria'),
     validUntil: z.string().datetime().optional(),
     eventDate: z.string().datetime().optional(),
+    eventTime: z.string().optional(),
     eventType: z.string().optional(),
     roomId: z.string().optional(),
     attendees: z.number().positive().optional(),
@@ -31,6 +32,7 @@ export const updateQuoteSchema = z.object({
   body: z.object({
     validUntil: z.string().datetime().optional(),
     eventDate: z.string().datetime().optional(),
+    eventTime: z.string().optional(),
     eventType: z.string().optional(),
     roomId: z.string().optional(),
     attendees: z.number().positive().optional(),

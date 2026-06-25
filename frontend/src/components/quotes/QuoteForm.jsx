@@ -18,6 +18,7 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     opportunityId: '',
     companyId: '',
     eventDate: '',
+    eventTime: '',
     validUntil: '',
     eventType: '',
     roomId: '',
@@ -28,6 +29,8 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
   });
   // { [serviceId]: { quantity, unitPrice, category } }
   const [selections, setSelections] = useState({});
+  const [includeTip, setIncludeTip] = useState(false);
+  const [tipRate, setTipRate] = useState(10);
   const [companies, setCompanies] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -69,6 +72,7 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           opportunityId: String(oppId),
           companyId: String(companyId),
           eventDate: q.eventDate ? q.eventDate.slice(0, 10) : '',
+          eventTime: q.eventTime || '',
           validUntil: q.validUntil ? q.validUntil.slice(0, 10) : '',
           eventType: q.eventType || '',
           roomId: String(roomId),
@@ -85,6 +89,8 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           }
         });
         setSelections(newSel);
+        const hasTip = (q.items || []).some(i => i.description === 'Propina' && i.category === 'AB');
+        setIncludeTip(hasTip);
       }).catch(() => {});
     }
   }, [quoteId]);
@@ -112,8 +118,8 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     return acc;
   }, {});
 
-  const getItems = () =>
-    services
+  const getItems = () => {
+    const baseItems = services
       .filter(s => selections[String(s._id || s.id)])
       .map(s => {
         const svcId = String(s._id || s.id);
@@ -126,6 +132,17 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           unitPrice: Number(sel.unitPrice) || 0,
         };
       });
+
+    if (includeTip && tipRate > 0) {
+      const abTotal = baseItems.filter(i => i.category === 'AB').reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+      const tipAmount = Math.round(abTotal * (tipRate / 100));
+      if (tipAmount > 0) {
+        baseItems.push({ description: 'Propina', category: 'AB', quantity: 1, unitPrice: tipAmount });
+      }
+    }
+
+    return baseItems;
+  };
 
   const items = getItems();
   const subtotal  = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
@@ -177,12 +194,16 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           <label className="input-label">Oportunidad</label>
           <select className="input-control" value={form.opportunityId} onChange={e => set('opportunityId', e.target.value)}>
             <option value="">Ninguna</option>
-            {opportunities.map(o => <option key={o._id || o.id} value={o._id || o.id}>{o.eventType || String(o._id || o.id)}</option>)}
+            {opportunities.map(o => <option key={o._id || o.id} value={o._id || o.id}>{o.name || o.eventType || String(o._id || o.id)}</option>)}
           </select>
         </div>
         <div className="input-field">
           <label className="input-label">Fecha del evento</label>
           <input className="input-control" type="date" value={form.eventDate} onChange={e => set('eventDate', e.target.value)} />
+        </div>
+        <div className="input-field">
+          <label className="input-label">Hora del evento</label>
+          <input className="input-control" type="time" value={form.eventTime} onChange={e => set('eventTime', e.target.value)} />
         </div>
         <div className="input-field">
           <label className="input-label">Válida hasta</label>
@@ -313,11 +334,54 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         })}
       </div>
 
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+        padding: 'var(--space-3) var(--space-4)',
+        borderRadius: 'var(--radius-sm)',
+        background: includeTip ? 'var(--color-gold-subtle)' : 'var(--color-gray-1)',
+        border: `1px solid ${includeTip ? 'var(--color-gold-dark)' : 'var(--color-border)'}`,
+        marginBottom: 'var(--space-4)',
+        transition: 'background 0.15s',
+      }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={includeTip}
+            onChange={(e) => setIncludeTip(e.target.checked)}
+            style={{ accentColor: 'var(--color-gold-dark)', width: 16, height: 16, cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>Incluir propina</span>
+        </label>
+        {includeTip && (
+          <>
+            <input
+              type="number" min="1" max="100" step="1"
+              value={tipRate}
+              onChange={(e) => setTipRate(Number(e.target.value) || 0)}
+              style={{ width: 60, textAlign: 'center', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: 'var(--text-sm)' }}
+            />
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>% del total A&B</span>
+            {(() => {
+              const abTotal = items.filter(i => i.category === 'AB' && i.description !== 'Propina').reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+              return abTotal > 0 ? (
+                <span style={{ marginLeft: 'auto', fontSize: 'var(--text-sm)', color: 'var(--color-gold-dark)', fontWeight: 'var(--font-semibold)' }}>
+                  {formatCurrency(Math.round(abTotal * (tipRate / 100)))}
+                </span>
+              ) : null;
+            })()}
+          </>
+        )}
+      </div>
+
       {items.length > 0 && (
         <div style={{ textAlign: 'right', marginBottom: 'var(--space-5)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
           <div>Subtotal: <strong>{formatCurrency(subtotal)}</strong></div>
+          {includeTip && (() => {
+            const tipItem = items.find(i => i.description === 'Propina');
+            return tipItem ? <div>Propina ({tipRate}%): <strong>{formatCurrency(tipItem.unitPrice)}</strong></div> : null;
+          })()}
           <div>IVA ({Math.round((form.taxRate || 0.19) * 100)}%): <strong>{formatCurrency(ivaAmount)}</strong></div>
-          {icoAmount > 0 && <div>ICO — A&B (8%): <strong>{formatCurrency(icoAmount)}</strong></div>}
+          {icoAmount > 0 && <div>ICO (8%): <strong>{formatCurrency(icoAmount)}</strong></div>}
           <div style={{ fontSize: 'var(--text-base)' }}>
             <strong>Total: {formatCurrency(total)}</strong>
           </div>

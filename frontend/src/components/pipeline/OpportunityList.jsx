@@ -28,6 +28,10 @@ const STAGE_VARIANT = {
 
 const COLUMNS = [
   {
+    key: 'name', label: 'Nombre',
+    render: (r) => r.name || '—',
+  },
+  {
     key: 'company', label: 'Empresa',
     render: (r) => <a href={`/empresas/${r.company?.id || r.company?._id}`}>{r.company?.name || '—'}</a>,
   },

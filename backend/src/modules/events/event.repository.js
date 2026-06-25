@@ -29,7 +29,7 @@ export const eventRepository = {
 
   async findById(id) {
     return Event.findById(id)
-      .populate('companyId', 'name taxId')
+      .populate('companyId', 'name taxId email')
       .populate('opportunityId', 'stage estimatedValue eventType')
       .populate('quoteId', 'number total status')
       .populate('roomId', 'name capacities')

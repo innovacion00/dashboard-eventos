@@ -24,6 +24,26 @@ export const beoController = {
     successResponse(res, mapBeo(beo));
   }),
 
+  addPayment: asyncHandler(async (req, res) => {
+    const filePath = req.file ? `/uploads/beo-payments/${req.file.filename}` : undefined;
+    const paymentData = {
+      amount: Number(req.body.amount),
+      method: req.body.method || 'TRANSFERENCIA',
+      reference: req.body.reference || '',
+      date: req.body.date || new Date().toISOString(),
+      notes: req.body.notes || '',
+      file: filePath,
+      createdBy: req.user.id,
+    };
+    const beo = await beoService.addPayment(req.params.id, paymentData, req.user, req);
+    successResponse(res, mapBeo(beo));
+  }),
+
+  removePayment: asyncHandler(async (req, res) => {
+    const beo = await beoService.removePayment(req.params.id, req.params.paymentId, req.user, req);
+    successResponse(res, mapBeo(beo));
+  }),
+
   downloadPdf: asyncHandler(async (req, res) => {
     const beo = await beoService.getById(req.params.id);
     const pdfBuffer = await generateBeoPdfBuffer(beo);
@@ -53,6 +73,16 @@ function mapBeo(b) {
     personnelNotes: b.personnelNotes,
     suppliers: b.suppliers,
     generalNotes: b.generalNotes,
+    paymentEvidence: (b.paymentEvidence || []).map(p => ({
+      id: p._id,
+      amount: p.amount,
+      method: p.method,
+      reference: p.reference,
+      date: p.date,
+      file: p.file,
+      notes: p.notes,
+      createdBy: p.createdBy,
+    })),
     status: b.status,
     issuedAt: b.issuedAt,
     createdBy: b.createdBy,

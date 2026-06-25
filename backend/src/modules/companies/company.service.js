@@ -36,13 +36,6 @@ export const companyService = {
       req,
     });
 
-    const { opportunityService } = await import('../opportunities/opportunity.service.js');
-    await opportunityService.createOpportunity(
-      { companyId: String(company._id), estimatedValue: 0 },
-      requestingUser,
-      req,
-    );
-
     return company;
   },
 

@@ -293,7 +293,7 @@ export async function generateQuotePdf(quote) {
       return [
         [{ content: 'Subtotal', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, formatCurrency(quote.subtotal)],
         [{ content: `IVA (${Math.round((quote.taxRate || 0.19) * 100)}%)`, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, formatCurrency(ivaAmount)],
-        [{ content: 'ICO — A&B (8%)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, formatCurrency(icoAmount)],
+        [{ content: 'ICO (8%)', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, formatCurrency(icoAmount)],
         [{ content: 'TOTAL', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fontSize: 11, textColor: GOLD } }, { content: formatCurrency(quote.total), styles: { fontStyle: 'bold', fontSize: 11, textColor: GOLD } }],
       ];
     })(),

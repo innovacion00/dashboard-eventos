@@ -23,17 +23,8 @@ const SEGMENTS = [
 ].map((item, i) => ({ type: 'SEGMENT', ...item, order: i + 1 }));
 
 const EVENT_TYPES = [
-  { code: 'CONFERENCIA', label: 'Conferencia' },
-  { code: 'CONGRESO', label: 'Congreso' },
-  { code: 'SEMINARIO', label: 'Seminario' },
-  { code: 'TALLER', label: 'Taller' },
-  { code: 'LANZAMIENTO', label: 'Lanzamiento de producto' },
-  { code: 'GALA', label: 'Gala / Cena de gala' },
-  { code: 'BODA', label: 'Boda' },
-  { code: 'QUINCEA', label: 'Quinceañera' },
-  { code: 'REUNION_EMPRESARIAL', label: 'Reunión empresarial' },
-  { code: 'CAPACITACION', label: 'Capacitación' },
-  { code: 'OTRO_EVENTO', label: 'Otro' },
+  { code: 'SERVICIO_SOCIAL', label: 'Servicio social' },
+  { code: 'SERVICIO_CORPORATIVO', label: 'Servicio corporativo' },
 ].map((item, i) => ({ type: 'EVENT_TYPE', ...item, order: i + 1 }));
 
 const ACTIVITY_TYPES = [
@@ -97,6 +88,9 @@ const ALL_CATALOGS = [
 async function seed() {
   await mongoose.connect(env.MONGO_URI);
   console.log('Conectado a MongoDB para sembrar catálogos...');
+
+  const deleted = await Catalog.deleteMany({ type: 'EVENT_TYPE' });
+  console.log(`Tipos de evento anteriores eliminados: ${deleted.deletedCount}`);
 
   let created = 0;
   let skipped = 0;

@@ -2,9 +2,11 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { env } from '../../config/env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOGO_PATH = path.join(__dirname, '../../assets/logo-windsor.png');
+const CONTACT_EMAIL = env.GMAIL_USER || '${CONTACT_EMAIL}';
 
 function toBase64DataUrl(filePath, mime = 'image/png') {
   try {
@@ -229,7 +231,7 @@ function buildHtml(beo) {
   </div>
   <div class="footer">
     <span>GEH Events Command Center — Hotel Windsor House</span>
-    <span>eventoswindsor@gehsuites.com</span>
+    <span>${CONTACT_EMAIL}</span>
   </div>
 </section>
 </body>

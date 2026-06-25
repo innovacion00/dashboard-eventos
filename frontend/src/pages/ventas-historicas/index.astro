@@ -1,0 +1,8 @@
+---
+import Layout from '../../components/layout/Layout.astro';
+import { HistoricalSalesList } from '../../components/historical-sales/HistoricalSalesList.jsx';
+---
+
+<Layout title="Ventas Históricas">
+  <HistoricalSalesList client:load />
+</Layout>

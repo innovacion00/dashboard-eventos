@@ -1,9 +1,23 @@
 import { quoteRepository } from './quote.repository.js';
 import { eventService } from '../events/event.service.js';
+import { opportunityRepository } from '../opportunities/opportunity.repository.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
+import { ConflictError } from '../../core/errors/ConflictError.js';
 import { audit } from '../audit/audit.service.js';
+import { sendEmail } from '../notifications/email.service.js';
+import { generateQuotePdfBuffer } from './quote-pdf.service.js';
 import { logger } from '../../config/logger.js';
+
+async function advanceOpportunity(opportunityId, stage) {
+  if (!opportunityId) return;
+  try {
+    const id = opportunityId._id || opportunityId;
+    await opportunityRepository.update(id, { stage });
+  } catch (err) {
+    logger.error({ err, opportunityId, stage }, 'Error al avanzar etapa de oportunidad');
+  }
+}
 
 const VALID_TRANSITIONS = {
   BORRADOR: ['EN_REVISION', 'VENCIDA'],
@@ -25,6 +39,13 @@ export const quoteService = {
   },
 
   async createQuote(data, requestingUser, req) {
+    if (data.opportunityId) {
+      const existing = await quoteRepository.findByOpportunityId(data.opportunityId);
+      if (existing) {
+        throw new ConflictError('Esta oportunidad ya tiene una cotización asociada');
+      }
+    }
+
     const quote = await quoteRepository.create({
       ...data,
       createdBy: requestingUser.id,
@@ -39,6 +60,8 @@ export const quoteService = {
       after: { number: quote.number, total: quote.total, opportunityId: quote.opportunityId },
       req,
     });
+
+    await advanceOpportunity(quote.opportunityId, 'COTIZADO');
 
     return quote;
   },
@@ -94,7 +117,15 @@ export const quoteService = {
       req,
     });
 
+    if (newStatus === 'EN_REVISION') {
+      await advanceOpportunity(quote.opportunityId, 'NEGOCIACION');
+      sendQuoteToCompany(id).catch(err =>
+        logger.error({ err, quoteId: id }, 'Error al enviar cotización por correo a la empresa')
+      );
+    }
+
     if (newStatus === 'APROBADA') {
+      await advanceOpportunity(quote.opportunityId, 'APROBADO_PENDIENTE_PAGO');
       try {
         await eventService.createFromQuote(quote, requestingUser, req);
       } catch (err) {
@@ -124,3 +155,26 @@ export const quoteService = {
     });
   },
 };
+
+async function sendQuoteToCompany(quoteId) {
+  const quote = await quoteRepository.findById(quoteId);
+  if (!quote) return;
+
+  const companyEmail = quote.companyId?.email;
+  const companyName = quote.companyId?.name || 'Cliente';
+  if (!companyEmail) {
+    logger.warn({ quoteId }, 'La empresa no tiene correo electrónico registrado');
+    return;
+  }
+
+  const pdfBuffer = await generateQuotePdfBuffer(quote);
+  const filename = `${quote.number}.pdf`;
+
+  await sendEmail({
+    to: companyEmail,
+    subject: `Cotización ${quote.number} — Hotel Windsor House`,
+    title: 'Cotización de evento',
+    message: `Estimado(a) ${companyName},<br><br>Adjunto encontrará la cotización <strong>${quote.number}</strong> para su revisión.<br><br>Quedamos atentos a sus comentarios.`,
+    attachments: [{ filename, content: pdfBuffer, contentType: 'application/pdf' }],
+  });
+}

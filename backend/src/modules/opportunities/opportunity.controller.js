@@ -37,6 +37,7 @@ export const opportunityController = {
 function mapOpportunity(o) {
   return {
     id: o._id,
+    name: o.name,
     company: o.companyId,
     owner: o.ownerId,
     eventType: o.eventType,

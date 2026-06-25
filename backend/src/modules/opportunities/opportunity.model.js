@@ -3,6 +3,7 @@ import { STAGES, STAGE_CODES } from '../../core/constants/stages.js';
 
 const opportunitySchema = new mongoose.Schema(
   {
+    name: { type: String, trim: true },
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     eventType: { type: String },

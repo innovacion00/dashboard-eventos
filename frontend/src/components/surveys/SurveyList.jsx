@@ -27,6 +27,7 @@ export function SurveyList() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   const load = async () => {
     try {
@@ -116,7 +117,10 @@ export function SurveyList() {
             <option key={v} value={v}>{l}</option>
           ))}
         </select>
-        <Button style={{ marginLeft: 'auto' }} onClick={() => setShowCreate(true)}>
+        <Button variant="secondary" onClick={() => setShowQr(true)} style={{ marginLeft: 'auto' }}>
+          Ver QR Encuesta
+        </Button>
+        <Button onClick={() => setShowCreate(true)}>
           Nueva encuesta
         </Button>
       </div>
@@ -156,6 +160,23 @@ export function SurveyList() {
           onSaved={() => { setShowCreate(false); load(); }}
           onCancel={() => setShowCreate(false)}
         />
+      </Modal>
+
+      <Modal open={showQr} title="QR — Encuesta de satisfacción" onClose={() => setShowQr(false)}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--space-4)' }}>
+          <img src="/qr-encuesta.png" alt="QR Encuesta" style={{ width: 280, height: 280, objectFit: 'contain' }} />
+          <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+            Escanea el código QR para acceder al formulario de encuesta de satisfacción.
+          </p>
+          <a
+            href="https://b24-xz8e0u.bitrix24.site/eventos-formulario/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-primary)' }}
+          >
+            Abrir enlace
+          </a>
+        </div>
       </Modal>
     </div>
   );

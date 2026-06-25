@@ -2,6 +2,7 @@ import { Opportunity } from '../opportunities/opportunity.model.js';
 import { Task } from '../tasks/task.model.js';
 import { Activity } from '../activities/activity.model.js';
 import { goalRepository } from '../goals/goal.repository.js';
+import { historicalSaleRepository } from '../historical-sales/historical-sale.repository.js';
 
 export const dashboardService = {
   async getMonthlySnapshot(year, month) {
@@ -11,7 +12,7 @@ export const dashboardService = {
 
     const now = new Date();
 
-    const [goal, opportunities, pendingTasks, overdueTasks, recentActivities] = await Promise.all([
+    const [goal, opportunities, pendingTasks, overdueTasks, recentActivities, historicalSales] = await Promise.all([
       goalRepository.findByYearMonth(y, m),
       Opportunity.find({ projectionMonth, active: true }).lean(),
       Task.countDocuments({ status: { $in: ['PENDIENTE', 'EN_PROGRESO'] } }),
@@ -22,6 +23,7 @@ export const dashboardService = {
         .sort({ date: -1 })
         .limit(50)
         .lean(),
+      historicalSaleRepository.findByYearMonth(y, m),
     ]);
 
     const confirmedOpps = opportunities.filter((o) => o.stage === 'CONFIRMADO');
@@ -80,6 +82,13 @@ export const dashboardService = {
       tasks: { pending: pendingTasks, overdue: overdueTasks },
       overdueOpportunities,
       recentActivities,
+      historicalSales: historicalSales.map(h => ({
+        executiveId: h.executiveId?._id,
+        executiveName: h.executiveId?.name || '—',
+        confirmedSales: h.confirmedSales,
+        confirmedEvents: h.confirmedEvents,
+      })),
+      historicalTotal: historicalSales.reduce((sum, h) => sum + (h.confirmedSales || 0), 0),
     };
   },
 };
