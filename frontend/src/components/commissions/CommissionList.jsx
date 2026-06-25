@@ -44,7 +44,7 @@ export function CommissionList() {
 
   return (
     <div className="page-container">
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />
+      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       {showForm && (
         <CommissionForm onSaved={() => { setShowForm(false); load(); }} onCancel={() => setShowForm(false)} />
