@@ -1,10 +1,10 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import vercel from '@astrojs/vercel/serverless';
+import node from '@astrojs/node';
 
 export default defineConfig({
   integrations: [react()],
   server: { port: 4321, host: true },
   output: 'server',
-  adapter: vercel(),
+  adapter: node({ mode: 'standalone' }),
 });

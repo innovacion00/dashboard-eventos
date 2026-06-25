@@ -1,0 +1,45 @@
+services:
+  backend:
+    build: ./backend
+    container_name: geh-backend
+    env_file: ./backend/.env
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - geh-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - PUBLIC_API_URL=/api/v1
+    container_name: geh-frontend
+    environment:
+      - HOST=0.0.0.0
+      - PORT=4321
+      - PUBLIC_API_URL=/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - geh-network
+
+  nginx:
+    build: ./nginx
+    container_name: geh-nginx
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - geh-network
+
+volumes:
+  uploads:
+
+networks:
+  geh-network:
+    driver: bridge
