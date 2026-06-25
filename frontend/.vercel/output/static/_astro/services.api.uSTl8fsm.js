@@ -1,1 +1,0 @@
-import{a as s}from"./client.GBKBwbN8.js";const a={list:(e={})=>s.get("/services?"+new URLSearchParams(e)),getById:e=>s.get(`/services/${e}`),create:e=>s.post("/services",e),update:(e,r)=>s.patch(`/services/${e}`,r),remove:e=>s.delete(`/services/${e}`)};export{a as s};

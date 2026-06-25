@@ -1,1 +1,0 @@
-import{a as e}from"./client.GBKBwbN8.js";const o={list:(t={})=>e.get("/quotes?"+new URLSearchParams(t)),getById:t=>e.get(`/quotes/${t}`),create:t=>e.post("/quotes",t),update:(t,s)=>e.patch(`/quotes/${t}`,s),changeStatus:(t,s)=>e.patch(`/quotes/${t}/status`,{status:s}),remove:t=>e.delete(`/quotes/${t}`)};export{o as q};
