@@ -3,6 +3,8 @@ services:
     build: ./backend
     container_name: geh-backend
     env_file: ./backend/.env
+    environment:
+      - NODE_ENV=production
     volumes:
       - uploads:/app/uploads
     restart: unless-stopped
@@ -29,6 +31,7 @@ services:
     build: ./nginx
     container_name: geh-nginx
     ports:
+      - "80:80"
       - "8080:80"
     restart: unless-stopped
     depends_on:
