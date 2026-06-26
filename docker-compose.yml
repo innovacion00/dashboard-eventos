@@ -29,7 +29,7 @@ services:
     build: ./nginx
     container_name: geh-nginx
     ports:
-      - "80:80"
+      - "8080:80"
     restart: unless-stopped
     depends_on:
       - frontend
