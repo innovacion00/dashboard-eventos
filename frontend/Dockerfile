@@ -2,6 +2,9 @@ FROM node:20-slim AS build
 
 WORKDIR /app
 
+ARG PUBLIC_API_URL=/api/v1
+ENV PUBLIC_API_URL=$PUBLIC_API_URL
+
 COPY package*.json ./
 RUN npm ci
 
