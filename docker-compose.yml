@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   backend:
     build: ./backend
@@ -31,7 +33,7 @@ services:
     build: ./nginx
     container_name: geh-nginx
     ports:
-      - "8080:80"
+      - "80:80"
     restart: unless-stopped
     depends_on:
       - frontend
