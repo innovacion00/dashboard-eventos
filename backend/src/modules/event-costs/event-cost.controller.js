@@ -28,6 +28,11 @@ export const eventCostController = {
     successResponse(res, summary);
   }),
 
+  getProfitBreakdown: asyncHandler(async (req, res) => {
+    const breakdown = await eventCostService.getProfitBreakdown(req.params.eventId);
+    successResponse(res, breakdown);
+  }),
+
   create: asyncHandler(async (req, res) => {
     const cost = await eventCostService.createCost(req.body, req.user, req);
     successResponse(res, mapCost(cost), undefined, 201);

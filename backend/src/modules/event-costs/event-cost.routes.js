@@ -13,6 +13,7 @@ eventCostRouter.use(authMiddleware);
 
 eventCostRouter.get('/event/:eventId', eventCostController.listByEvent);
 eventCostRouter.get('/event/:eventId/summary', eventCostController.getSummary);
+eventCostRouter.get('/event/:eventId/profit-breakdown', eventCostController.getProfitBreakdown);
 eventCostRouter.post('/', requireRole(WRITE_ROLES), validate(createEventCostSchema), eventCostController.create);
 eventCostRouter.patch('/:id', requireRole(WRITE_ROLES), validate(updateEventCostSchema), eventCostController.update);
 eventCostRouter.delete('/:id', requireRole(WRITE_ROLES), eventCostController.remove);

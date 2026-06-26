@@ -5,7 +5,7 @@ import { formatCurrency } from '../../lib/utils/format.js';
 
 const CATEGORIES = ['AB', 'AV', 'SALON', 'PERSONAL', 'PROVEEDOR', 'OTRO'];
 const CATEGORY_LABEL = {
-  AB: 'A&B', AV: 'Audiovisual', SALON: 'Salón', PERSONAL: 'Personal', PROVEEDOR: 'Proveedor', OTRO: 'Otro',
+  AB: 'A&B', AV: 'Audiovisual', SALON: 'Salón', PERSONAL: 'Personal', PROVEEDOR: 'Proveedor', OTRO: 'Otro', OTROS: 'Otros', EXTERNO: 'Externo',
 };
 
 const EMPTY_FORM = {
@@ -15,6 +15,7 @@ const EMPTY_FORM = {
 export function EventCostsPanel({ eventId, revenue = 0 }) {
   const [costs, setCosts] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [breakdown, setBreakdown] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -23,12 +24,14 @@ export function EventCostsPanel({ eventId, revenue = 0 }) {
 
   const load = async () => {
     try {
-      const [costsRes, summaryRes] = await Promise.all([
+      const [costsRes, summaryRes, breakdownRes] = await Promise.all([
         eventCostsApi.listByEvent(eventId),
         eventCostsApi.getSummary(eventId, revenue),
+        eventCostsApi.getProfitBreakdown(eventId),
       ]);
       setCosts(costsRes.data || []);
       setSummary(summaryRes.data);
+      setBreakdown(breakdownRes.data);
     } catch (e) {
       setError(e.message);
     }
@@ -99,32 +102,84 @@ export function EventCostsPanel({ eventId, revenue = 0 }) {
     <div>
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      {summary && (
-        <div className="profitability-summary">
-          <div className="profit-card">
-            <span className="profit-label">Ingresos</span>
-            <span className="profit-value">{formatCurrency(summary.revenue)}</span>
-          </div>
-          <div className="profit-card">
-            <span className="profit-label">Costos reales</span>
-            <span className="profit-value" style={{ color: 'var(--color-danger)' }}>{formatCurrency(summary.totalActual)}</span>
-          </div>
-          <div className="profit-card">
-            <span className="profit-label">Margen bruto</span>
-            <span className="profit-value" style={{ color: summary.grossMargin >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-              {formatCurrency(summary.grossMargin)}
-            </span>
-          </div>
-          <div className="profit-card">
-            <span className="profit-label">Margen %</span>
-            <span className="profit-value" style={{ color: summary.marginRate >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-              {summary.marginRate.toFixed(1)}%
-            </span>
-          </div>
+      {breakdown && breakdown.categories.length > 0 && (
+        <div className="table-wrapper" style={{ marginBottom: 'var(--space-6)' }}>
+          <table className="table" style={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '25%' }} />
+              <col style={{ width: '25%' }} />
+              <col style={{ width: '25%' }} />
+              <col style={{ width: '25%' }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Venta antes de imp.</th>
+                <th style={{ color: 'var(--color-danger)' }}>Costo</th>
+                <th style={{ color: 'var(--color-success)' }}>Utilidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              {breakdown.categories.map((cat) => (
+                <tr key={cat.category}>
+                  <td><span className="badge badge-neutral">{CATEGORY_LABEL[cat.category] || cat.category}</span></td>
+                  <td style={{ fontWeight: 500 }}>{formatCurrency(cat.revenue)}</td>
+                  <td style={{ color: 'var(--color-danger)', fontWeight: 500 }}>{formatCurrency(cat.cost)}</td>
+                  <td style={{ color: 'var(--color-success)', fontWeight: 500 }}>{formatCurrency(cat.profit)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ background: 'var(--color-surface)', fontWeight: 700 }}>
+                <td>Total</td>
+                <td>{formatCurrency(breakdown.totals.revenue)}</td>
+                <td style={{ color: 'var(--color-danger)' }}>{formatCurrency(breakdown.totals.cost)}</td>
+                <td style={{ color: 'var(--color-success)' }}>{formatCurrency(breakdown.totals.profit)}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-4)' }}>
+      {(summary || breakdown) && (() => {
+        const hasBreakdownData = breakdown && breakdown.categories.length > 0;
+        const ingresos = hasBreakdownData ? breakdown.totals.revenue : (summary?.revenue || 0);
+        const costos = hasBreakdownData ? breakdown.totals.cost : (summary?.totalActual || 0);
+        const utilidad = hasBreakdownData ? breakdown.totals.profit : (summary?.grossMargin || 0);
+        const margen = hasBreakdownData
+          ? breakdown.totals.profitRate
+          : (summary?.marginRate || 0);
+
+        return (
+          <div className="profitability-summary" style={{ marginBottom: 'var(--space-5)' }}>
+            <div className="profit-card" style={{ gridColumn: 'span 2' }}>
+              <span className="profit-label">Ingresos (antes de imp.)</span>
+              <span className="profit-value">{formatCurrency(ingresos)}</span>
+            </div>
+            <div className="profit-card">
+              <span className="profit-label">Costos</span>
+              <span className="profit-value" style={{ color: 'var(--color-danger)' }}>{formatCurrency(costos)}</span>
+            </div>
+            <div className="profit-card">
+              <span className="profit-label">Utilidad</span>
+              <span className="profit-value" style={{ color: utilidad >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                {formatCurrency(utilidad)}
+              </span>
+            </div>
+            <div className="profit-card">
+              <span className="profit-label">Margen %</span>
+              <span className="profit-value" style={{ color: margen >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                {margen.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        );
+      })()}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+        <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>
+          Costos registrados
+        </h3>
         <button className="btn btn-primary" style={{ fontSize: 'var(--text-sm)' }} onClick={openCreate}>
           + Agregar costo
         </button>
