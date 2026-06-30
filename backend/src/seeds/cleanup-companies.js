@@ -8,6 +8,7 @@ import { Activity } from '../modules/activities/activity.model.js';
 import { Event } from '../modules/events/event.model.js';
 import { Beo } from '../modules/beos/beo.model.js';
 import { EventCost } from '../modules/event-costs/event-cost.model.js';
+import { Invoice } from '../modules/invoices/invoice.model.js';
 import { Contact } from '../modules/contacts/contact.model.js';
 
 const COMPANY_NAMES = ['camilo prueba'];
@@ -41,6 +42,7 @@ async function cleanup() {
 
   const beos = await Beo.find({ eventId: { $in: eventIds } });
   const eventCosts = await EventCost.find({ eventId: { $in: eventIds } });
+  const invoices = await Invoice.find({ $or: [{ eventId: { $in: eventIds } }, { companyId: { $in: companyIds } }] });
   const activities = await Activity.find({ companyId: { $in: companyIds } });
   const contacts = await Contact.find({ companyId: { $in: companyIds } });
 
@@ -52,12 +54,14 @@ async function cleanup() {
   console.log(`  Eventos:        ${events.length}`);
   console.log(`  BEOs:           ${beos.length}`);
   console.log(`  Costos evento:  ${eventCosts.length}`);
+  console.log(`  Facturas:       ${invoices.length}`);
   console.log(`  Actividades:    ${activities.length}`);
   console.log(`\nEliminando...\n`);
 
   const results = await Promise.all([
     Beo.deleteMany({ eventId: { $in: eventIds } }),
     EventCost.deleteMany({ eventId: { $in: eventIds } }),
+    Invoice.deleteMany({ _id: { $in: invoices.map(i => i._id) } }),
     Event.deleteMany({ _id: { $in: eventIds } }),
     Quote.deleteMany({ _id: { $in: quoteIds } }),
     Activity.deleteMany({ companyId: { $in: companyIds } }),
@@ -69,12 +73,13 @@ async function cleanup() {
   console.log('Eliminación completada:');
   console.log(`  BEOs:           ${results[0].deletedCount}`);
   console.log(`  Costos evento:  ${results[1].deletedCount}`);
-  console.log(`  Eventos:        ${results[2].deletedCount}`);
-  console.log(`  Cotizaciones:   ${results[3].deletedCount}`);
-  console.log(`  Actividades:    ${results[4].deletedCount}`);
-  console.log(`  Oportunidades:  ${results[5].deletedCount}`);
-  console.log(`  Contactos:      ${results[6].deletedCount}`);
-  console.log(`  Empresas:       ${results[7].deletedCount}`);
+  console.log(`  Facturas:       ${results[2].deletedCount}`);
+  console.log(`  Eventos:        ${results[3].deletedCount}`);
+  console.log(`  Cotizaciones:   ${results[4].deletedCount}`);
+  console.log(`  Actividades:    ${results[5].deletedCount}`);
+  console.log(`  Oportunidades:  ${results[6].deletedCount}`);
+  console.log(`  Contactos:      ${results[7].deletedCount}`);
+  console.log(`  Empresas:       ${results[8].deletedCount}`);
 
   await mongoose.disconnect();
   console.log('\nDesconectado. Limpieza finalizada.');

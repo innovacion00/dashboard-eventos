@@ -11,6 +11,7 @@ import {
 } from './invoice.validation.js';
 
 const FINANCE_ROLES = ['FINANCIERO_CARTERA', 'DIRECCION_GENERAL', 'ADMINISTRADOR'];
+const EXTENDED_WRITE_ROLES = [...FINANCE_ROLES, 'EJECUTIVO_COMERCIAL'];
 
 export const invoiceRouter = Router();
 
@@ -20,7 +21,7 @@ invoiceRouter.get('/', invoiceController.list);
 invoiceRouter.post('/', requireRole(FINANCE_ROLES), validate(createInvoiceSchema), invoiceController.create);
 invoiceRouter.get('/:id', invoiceController.getById);
 invoiceRouter.patch('/:id', requireRole(FINANCE_ROLES), validate(updateInvoiceSchema), invoiceController.update);
-invoiceRouter.patch('/:id/status', requireRole(FINANCE_ROLES), validate(changeInvoiceStatusSchema), invoiceController.changeStatus);
-invoiceRouter.post('/:id/payments', requireRole(FINANCE_ROLES), invoicePaymentUpload.single('file'), invoiceController.addPayment);
+invoiceRouter.patch('/:id/status', requireRole(EXTENDED_WRITE_ROLES), validate(changeInvoiceStatusSchema), invoiceController.changeStatus);
+invoiceRouter.post('/:id/payments', requireRole(EXTENDED_WRITE_ROLES), invoicePaymentUpload.single('file'), invoiceController.addPayment);
 invoiceRouter.delete('/:id/payments/:paymentId', requireRole(FINANCE_ROLES), invoiceController.cancelPayment);
 invoiceRouter.delete('/:id', requireRole(FINANCE_ROLES), invoiceController.remove);

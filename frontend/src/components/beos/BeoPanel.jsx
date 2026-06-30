@@ -555,6 +555,7 @@ function BeoPayments({ beos, onReload }) {
   };
 
   const handleRemove = async (beoId, paymentId) => {
+    if (!confirm('¿Eliminar esta evidencia de pago?')) return;
     try {
       await beosApi.removePayment(beoId, paymentId);
       await onReload();

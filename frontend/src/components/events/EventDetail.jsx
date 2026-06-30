@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { eventsApi } from '../../lib/api/events.api.js';
+import { beosApi } from '../../lib/api/beos.api.js';
 import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { Modal } from '../ui/Modal.jsx';
@@ -7,7 +8,7 @@ import { EventForm } from './EventForm.jsx';
 import { QuoteForm } from '../quotes/QuoteForm.jsx';
 import { BeoPanel } from '../beos/BeoPanel.jsx';
 import { EventCostsPanel } from '../event-costs/EventCostsPanel.jsx';
-import { formatDate, formatCurrency } from '../../lib/utils/format.js';
+import { formatDate, formatDateTime, formatCurrency } from '../../lib/utils/format.js';
 
 const STATUS_LABELS = {
   CONFIRMADO: 'Confirmado',
@@ -37,6 +38,7 @@ const NEXT_STATUSES = {
 
 export function EventDetail({ id }) {
   const [event, setEvent] = useState(null);
+  const [beoSetup, setBeoSetup] = useState(null);
   const [tab, setTab] = useState('info');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,8 +49,14 @@ export function EventDetail({ id }) {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await eventsApi.getById(id);
-      setEvent(res.data);
+      const [eventRes, beosRes] = await Promise.all([
+        eventsApi.getById(id),
+        beosApi.getByEvent(id).catch(() => ({ data: [] })),
+      ]);
+      setEvent(eventRes.data);
+      const beos = beosRes.data || [];
+      const salonBeo = beos.find(b => b.category === 'SALON') || beos[0];
+      setBeoSetup(salonBeo?.setup || null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -57,6 +65,17 @@ export function EventDetail({ id }) {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  const handleTabChange = (key) => {
+    setTab(key);
+    if (key === 'info') {
+      beosApi.getByEvent(id).then(res => {
+        const beos = res.data || [];
+        const salonBeo = beos.find(b => b.category === 'SALON') || beos[0];
+        setBeoSetup(salonBeo?.setup || null);
+      }).catch(() => {});
+    }
+  };
 
   const handleStatusChange = async (status) => {
     setActionLoading(status);
@@ -114,7 +133,7 @@ export function EventDetail({ id }) {
           { key: 'beo', label: 'BEO (Orden Operativa)' },
           { key: 'costos', label: 'Costos / Utilidad' },
         ].map(({ key, label }) => (
-          <button key={key} className={`tab-btn ${tab === key ? 'tab-btn--active' : ''}`} onClick={() => setTab(key)}>
+          <button key={key} className={`tab-btn ${tab === key ? 'tab-btn--active' : ''}`} onClick={() => handleTabChange(key)}>
             {label}
           </button>
         ))}
@@ -141,7 +160,9 @@ export function EventDetail({ id }) {
             </div>
             <div className="info-row">
               <span className="info-label">Montaje</span>
-              <span className="info-value">{SETUP_LABELS[event.setupType] || event.setupType || '—'}</span>
+              <span className="info-value">
+                {SETUP_LABELS[beoSetup?.type] || beoSetup?.type || SETUP_LABELS[event.setupType] || event.setupType || '—'}
+              </span>
             </div>
             <div className="info-row">
               <span className="info-label">Asistentes</span>
@@ -150,7 +171,9 @@ export function EventDetail({ id }) {
             <div className="info-row">
               <span className="info-label">Horario</span>
               <span className="info-value">
-                {event.startTime && event.endTime ? `${event.startTime} — ${event.endTime}` : event.startTime || '—'}
+                {beoSetup?.readyAt
+                  ? `Montaje listo: ${formatDateTime(beoSetup.readyAt)}`
+                  : (event.startTime && event.endTime ? `${event.startTime} — ${event.endTime}` : event.startTime || '—')}
               </span>
             </div>
             <div className="info-row">

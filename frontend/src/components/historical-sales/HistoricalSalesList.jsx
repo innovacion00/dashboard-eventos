@@ -83,6 +83,7 @@ export function HistoricalSalesList() {
   };
 
   const handleDelete = async (id) => {
+    if (!confirm('¿Eliminar este registro de ventas históricas?')) return;
     try {
       await historicalSalesApi.remove(id);
       await load();
