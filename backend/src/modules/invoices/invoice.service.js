@@ -25,6 +25,66 @@ export const invoiceService = {
     return inv;
   },
 
+  // Called automatically when an event is created (manual, desde oportunidad o desde cotización)
+  async createFromEvent(event, quote, requestingUser, req) {
+    const existing = await invoiceRepository.findByEventId(event._id);
+    if (existing) return existing;
+
+    let subtotal = 0;
+    let taxRate = 0.19;
+    let ivaAmount = 0;
+    let icoAmount = 0;
+    let tipAmount = 0;
+    let tipRate = 0;
+
+    if (quote && quote.subtotal > 0) {
+      subtotal = quote.subtotal;
+      ivaAmount = quote.ivaAmount || 0;
+      icoAmount = quote.icoAmount || 0;
+      const totalTax = ivaAmount + icoAmount;
+      taxRate = Math.round((totalTax / subtotal) * 10000) / 10000;
+
+      const tipItem = (quote.items || []).find(i => i.description === 'Propina' && i.category === 'AB');
+      if (tipItem) {
+        tipAmount = tipItem.total || tipItem.unitPrice || 0;
+        const abBase = (quote.items || [])
+          .filter(i => i.category === 'AB' && i.description !== 'Propina')
+          .reduce((s, i) => s + (i.total || 0), 0);
+        tipRate = abBase > 0 ? Math.round((tipAmount / abBase) * 10000) / 100 : 0;
+      }
+    } else {
+      subtotal = event.totalValue || 0;
+    }
+
+    const companyId = event.companyId?._id || event.companyId;
+    const quoteId = event.quoteId?._id || event.quoteId || undefined;
+
+    const inv = await invoiceRepository.create({
+      eventId: event._id,
+      companyId,
+      quoteId,
+      subtotal,
+      taxRate,
+      ivaAmount,
+      icoAmount,
+      tipAmount,
+      tipRate,
+      createdBy: requestingUser.id,
+    });
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'invoices',
+      action: 'CREATE',
+      entityId: inv._id,
+      after: { number: inv.number, total: inv.total, eventId: event._id, source: 'auto-from-event' },
+      req,
+    });
+
+    return inv;
+  },
+
   async createInvoice(data, requestingUser, req) {
     const inv = await invoiceRepository.create({ ...data, createdBy: requestingUser.id });
 

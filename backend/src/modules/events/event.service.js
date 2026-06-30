@@ -6,6 +6,7 @@ import { audit } from '../audit/audit.service.js';
 import { notify } from '../notifications/notification.service.js';
 import { sendEmail } from '../notifications/email.service.js';
 import { beoService } from '../beos/beo.service.js';
+import { invoiceService } from '../invoices/invoice.service.js';
 import { logger } from '../../config/logger.js';
 
 const SURVEY_URL = 'https://b24-xz8e0u.bitrix24.site/eventos-formulario/';
@@ -36,6 +37,12 @@ export const eventService = {
       after: { number: event.number, name: event.name, eventDate: event.eventDate },
       req,
     });
+
+    try {
+      await invoiceService.createFromEvent(event, null, requestingUser, req);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
 
     return event;
   },
@@ -73,6 +80,12 @@ export const eventService = {
       },
       req,
     });
+
+    try {
+      await invoiceService.createFromEvent(event, null, requestingUser, req);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
 
     return event;
   },
@@ -116,7 +129,44 @@ export const eventService = {
       logger.error({ err, eventId: event._id }, 'Error al crear BEOs desde cotización aprobada');
     }
 
+    try {
+      await invoiceService.createFromEvent(event, quote, requestingUser, req);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
+
     return event;
+  },
+
+  // Called automatically when a linked quote is updated, to keep the event in sync
+  async syncFromQuote(quote, requestingUser, req) {
+    const event = await eventRepository.findByQuoteId(quote._id);
+    if (!event || !event.active) return null;
+    if (['REALIZADO', 'CANCELADO'].includes(event.status)) return event;
+
+    const before = { totalValue: event.totalValue, eventDate: event.eventDate, attendees: event.attendees };
+
+    const updated = await eventRepository.update(event._id, {
+      totalValue: quote.total || 0,
+      eventDate: quote.eventDate || event.eventDate,
+      eventType: quote.eventType || event.eventType,
+      roomId: quote.roomId?._id || quote.roomId || event.roomId,
+      attendees: quote.attendees || event.attendees,
+      notes: quote.notes || event.notes,
+    });
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'events',
+      action: 'UPDATE',
+      entityId: event._id,
+      before,
+      after: { totalValue: updated.totalValue, eventDate: updated.eventDate, source: 'sync-from-quote' },
+      req,
+    });
+
+    return updated;
   },
 
   async updateEvent(id, data, requestingUser, req) {

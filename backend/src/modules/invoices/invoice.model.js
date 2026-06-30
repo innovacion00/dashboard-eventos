@@ -13,6 +13,7 @@ const paymentSchema = new mongoose.Schema(
     method: { type: String, enum: PAYMENT_METHODS, required: true },
     reference: { type: String, trim: true },
     notes: { type: String },
+    file: { type: String },
     status: { type: String, enum: PAYMENT_STATUSES, default: 'RECIBIDO' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
@@ -30,6 +31,10 @@ const invoiceSchema = new mongoose.Schema(
     dueDate: { type: Date },
     subtotal: { type: Number, default: 0, min: 0 },
     taxRate: { type: Number, default: 0.19, min: 0, max: 1 },
+    ivaAmount: { type: Number, default: 0, min: 0 },
+    icoAmount: { type: Number, default: 0, min: 0 },
+    tipRate: { type: Number, default: 0, min: 0 },
+    tipAmount: { type: Number, default: 0, min: 0 },
     taxAmount: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
     paidAmount: { type: Number, default: 0 },
@@ -55,7 +60,10 @@ invoiceSchema.pre('save', async function (next) {
     this.number = `FAC-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
-  this.taxAmount = Math.round(this.subtotal * this.taxRate * 100) / 100;
+  if (!this.icoAmount && !this.ivaAmount) {
+    this.ivaAmount = Math.round(this.subtotal * this.taxRate * 100) / 100;
+  }
+  this.taxAmount = Math.round(((this.ivaAmount || 0) + (this.icoAmount || 0)) * 100) / 100;
   this.total = Math.round((this.subtotal + this.taxAmount) * 100) / 100;
 
   this.paidAmount = this.payments

@@ -87,6 +87,12 @@ export const quoteService = {
       req,
     });
 
+    try {
+      await eventService.syncFromQuote(updated, requestingUser, req);
+    } catch (err) {
+      logger.error({ err, quoteId: id }, 'Error al sincronizar evento desde cotización actualizada');
+    }
+
     return updated;
   },
 

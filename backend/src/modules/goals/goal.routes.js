@@ -16,5 +16,6 @@ router.use(authMiddleware);
 router.get('/', goalController.get);
 router.post('/', requireRole(GOAL_ROLES), validate(createGoalSchema), goalController.create);
 router.patch('/:id', requireRole(GOAL_ROLES), validate(updateGoalSchema), goalController.update);
+router.delete('/:id', requireRole(GOAL_ROLES), goalController.remove);
 
 export { router as goalRouter };

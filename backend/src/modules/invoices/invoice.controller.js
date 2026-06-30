@@ -11,6 +11,7 @@ function mapPayment(p) {
     method: p.method,
     reference: p.reference,
     notes: p.notes,
+    file: p.file,
     status: p.status,
     createdAt: p.createdAt,
   };
@@ -34,6 +35,10 @@ function mapInvoice(inv) {
     dueDate: inv.dueDate,
     subtotal: inv.subtotal,
     taxRate: inv.taxRate,
+    ivaAmount: inv.ivaAmount,
+    icoAmount: inv.icoAmount,
+    tipRate: inv.tipRate,
+    tipAmount: inv.tipAmount,
     taxAmount: inv.taxAmount,
     total: inv.total,
     paidAmount: inv.paidAmount,
@@ -49,7 +54,7 @@ function mapInvoice(inv) {
 export const invoiceController = {
   list: asyncHandler(async (req, res) => {
     const result = await invoiceService.listInvoices(req.query);
-    successResponse(res, result.data.map(mapInvoice), result.meta);
+    successResponse(res, result.data.map(mapInvoice), 200, result.meta);
   }),
 
   getById: asyncHandler(async (req, res) => {
@@ -59,7 +64,7 @@ export const invoiceController = {
 
   create: asyncHandler(async (req, res) => {
     const inv = await invoiceService.createInvoice(req.body, req.user, req);
-    successResponse(res, mapInvoice(inv), undefined, 201);
+    successResponse(res, mapInvoice(inv), 201);
   }),
 
   update: asyncHandler(async (req, res) => {
@@ -73,8 +78,18 @@ export const invoiceController = {
   }),
 
   addPayment: asyncHandler(async (req, res) => {
-    const inv = await invoiceService.addPayment(req.params.id, req.body, req.user, req);
-    successResponse(res, mapInvoice(inv), undefined, 201);
+    const filePath = req.file ? `/uploads/invoice-payments/${req.file.filename}` : undefined;
+    const paymentData = {
+      type: req.body.type,
+      amount: Number(req.body.amount),
+      paymentDate: req.body.paymentDate,
+      method: req.body.method,
+      reference: req.body.reference || '',
+      notes: req.body.notes || '',
+      file: filePath,
+    };
+    const inv = await invoiceService.addPayment(req.params.id, paymentData, req.user, req);
+    successResponse(res, mapInvoice(inv), 201);
   }),
 
   cancelPayment: asyncHandler(async (req, res) => {

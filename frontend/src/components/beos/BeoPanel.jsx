@@ -154,10 +154,7 @@ export function BeoPanel({ eventId }) {
       const av    = c['AV'];
       const otros = c['OTROS'];
 
-      const saves = [];
-
-      // SALON BEO: montaje, proveedores, notas generales
-      if (main) saves.push(beosApi.update(main.id, {
+      const mainPayload = {
         setup: {
           ...draft.setup,
           chairs:  draft.setup.chairs  ? Number(draft.setup.chairs)  : undefined,
@@ -166,7 +163,26 @@ export function BeoPanel({ eventId }) {
         },
         suppliers:    draft.suppliers,
         generalNotes: draft.generalNotes,
-      }));
+      };
+
+      if (!ab && main) {
+        mainPayload.menu = draft.menu.map(m => ({ ...m, serviceId: m.serviceId || undefined, quantity: Number(m.quantity) }));
+        mainPayload.menuNotes = draft.menuNotes;
+      }
+
+      if (!av && main) {
+        mainPayload.audiovisual = draft.audiovisual.map(a => ({ ...a, serviceId: a.serviceId || undefined, quantity: Number(a.quantity) }));
+        mainPayload.avNotes = draft.avNotes;
+      }
+
+      if (!otros && main) {
+        mainPayload.personnel = draft.personnel.map(p => ({ ...p, quantity: Number(p.quantity) }));
+        mainPayload.personnelNotes = draft.personnelNotes;
+      }
+
+      const saves = [];
+
+      if (main) saves.push(beosApi.update(main.id, mainPayload));
 
       if (ab) saves.push(beosApi.update(ab.id, {
         menu: draft.menu.map(m => ({ ...m, serviceId: m.serviceId || undefined, quantity: Number(m.quantity) })),
@@ -178,9 +194,7 @@ export function BeoPanel({ eventId }) {
         avNotes: draft.avNotes,
       }));
 
-      // OTROS BEO: personal de servicio
-      const personnelTarget = otros || main;
-      if (personnelTarget) saves.push(beosApi.update(personnelTarget.id, {
+      if (otros) saves.push(beosApi.update(otros.id, {
         personnel: draft.personnel.map(p => ({ ...p, quantity: Number(p.quantity) })),
         personnelNotes: draft.personnelNotes,
       }));

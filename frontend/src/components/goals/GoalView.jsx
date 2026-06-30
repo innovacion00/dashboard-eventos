@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { goalsApi } from '../../lib/api/goals.api.js';
+import { usersApi } from '../../lib/api/users.api.js';
+import { Table } from '../ui/Table.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { Modal } from '../ui/Modal.jsx';
@@ -11,17 +13,19 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 export function GoalView() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [goal, setGoal] = useState(null);
+  const [goals, setGoals] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
+  const [editGoal, setEditGoal] = useState(null);
 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await goalsApi.get({ year, month });
-      setGoal(res.data);
+      const res = await goalsApi.get({ year });
+      const data = res.data;
+      setGoals(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -29,7 +33,55 @@ export function GoalView() {
     }
   };
 
-  useEffect(() => { load(); }, [year, month]);
+  useEffect(() => {
+    usersApi.list({ limit: 100 }).then(res => {
+      const execs = (res.data || []).filter(u =>
+        u.role === 'EJECUTIVO_COMERCIAL' || u.role === 'LIDER_COMERCIAL'
+      );
+      setUsers(execs);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => { load(); }, [year]);
+
+  const openEdit = (goal) => {
+    setEditGoal(goal);
+    setModal('edit');
+  };
+
+  const openNew = () => {
+    setEditGoal(null);
+    setModal('new');
+  };
+
+  const handleDelete = async (goal) => {
+    if (!confirm(`¿Eliminar la meta de ${MONTHS[goal.month - 1]} ${goal.year}${goal.user ? ` (${goal.user.name})` : ''}?`)) return;
+    try {
+      await goalsApi.remove(goal.id);
+      load();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const COLUMNS = [
+    { key: 'month', label: 'Mes', render: (g) => MONTHS[g.month - 1] || g.month },
+    { key: 'user', label: 'Asignada a', render: (g) => <strong>{g.user?.name || 'General'}</strong> },
+    { key: 'revenueTarget', label: 'Meta de ingresos', render: (g) => formatCurrency(g.revenueTarget) },
+    { key: 'eventCountTarget', label: 'Meta de eventos', render: (g) => g.eventCountTarget ?? '—' },
+    { key: 'averageTicketTarget', label: 'Ticket promedio', render: (g) => g.averageTicketTarget ? formatCurrency(g.averageTicketTarget) : '—' },
+    { key: 'marginTarget', label: 'Margen', render: (g) => g.marginTarget != null ? `${g.marginTarget}%` : '—' },
+    { key: 'presaleThreshold', label: 'Preventa', render: (g) => `${g.presaleThreshold}%` },
+    {
+      key: 'actions', label: '',
+      render: (g) => (
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button className="link-btn" onClick={() => openEdit(g)}>Editar</button>
+          <button className="link-btn" style={{ color: 'var(--color-danger)' }} onClick={() => handleDelete(g)}>Eliminar</button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="page-container">
@@ -39,49 +91,27 @@ export function GoalView() {
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
-        <select className="input-control" value={month} onChange={(e) => setMonth(Number(e.target.value))} style={{ maxWidth: 140 }}>
-          {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
-        </select>
-        <Button style={{ marginLeft: 'auto' }} onClick={() => setModal(goal ? 'edit' : 'new')}>
-          {goal ? 'Editar meta' : 'Crear meta'}
-        </Button>
+        <Button style={{ marginLeft: 'auto' }} onClick={openNew}>Crear meta</Button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-      {loading ? (
-        <p className="text-muted">Cargando...</p>
-      ) : goal ? (
-        <div className="detail-grid">
-          <InfoRow label="Mes" value={`${MONTHS[month - 1]} ${year}`} />
-          <InfoRow label="Meta de ingresos" value={formatCurrency(goal.revenueTarget)} />
-          <InfoRow label="Meta de eventos" value={goal.eventCountTarget} />
-          <InfoRow label="Ticket promedio objetivo" value={formatCurrency(goal.averageTicketTarget)} />
-          <InfoRow label="Margen objetivo" value={goal.marginTarget != null ? `${goal.marginTarget}%` : '—'} />
-          <InfoRow label="Umbral de preventa" value={`${goal.presaleThreshold}%`} />
-        </div>
-      ) : (
-        <p className="text-muted">No hay meta definida para {MONTHS[month - 1]} {year}.</p>
-      )}
+      <Table
+        columns={COLUMNS}
+        rows={goals}
+        loading={loading}
+        emptyText={`No hay metas definidas para ${year}.`}
+      />
 
       <Modal open={modal === 'new' || modal === 'edit'} title={modal === 'edit' ? 'Editar meta' : 'Nueva meta'} onClose={() => setModal(null)} size="sm">
         <GoalForm
-          initial={goal}
+          initial={editGoal}
           defaultYear={year}
-          defaultMonth={month}
+          defaultMonth={now.getMonth() + 1}
           onSaved={() => { setModal(null); load(); }}
           onCancel={() => setModal(null)}
         />
       </Modal>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }) {
-  return (
-    <div className="info-row">
-      <span className="info-label">{label}</span>
-      <span className="info-value">{value ?? '—'}</span>
     </div>
   );
 }

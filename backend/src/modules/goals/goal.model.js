@@ -4,6 +4,7 @@ const goalSchema = new mongoose.Schema(
   {
     year: { type: Number, required: true },
     month: { type: Number, required: true, min: 1, max: 12 },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     revenueTarget: { type: Number, required: true, min: 0 },
     eventCountTarget: { type: Number, min: 0, default: 0 },
     averageTicketTarget: { type: Number, min: 0 },
@@ -14,6 +15,6 @@ const goalSchema = new mongoose.Schema(
   { timestamps: true, collection: 'goals' }
 );
 
-goalSchema.index({ year: 1, month: 1 }, { unique: true });
+goalSchema.index({ year: 1, month: 1, userId: 1 }, { unique: true });
 
 export const Goal = mongoose.model('Goal', goalSchema);

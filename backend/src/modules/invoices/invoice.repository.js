@@ -39,6 +39,10 @@ export const invoiceRepository = {
       .populate('createdBy', 'name email');
   },
 
+  async findByEventId(eventId) {
+    return Invoice.findOne({ eventId, active: true });
+  },
+
   async create(data) {
     const inv = new Invoice(data);
     return inv.save();

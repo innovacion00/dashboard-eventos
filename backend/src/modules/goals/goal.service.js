@@ -4,17 +4,20 @@ import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { audit } from '../audit/audit.service.js';
 
 export const goalService = {
-  async getGoal(year, month) {
-    if (year && month) {
-      return goalRepository.findByYearMonth(year, month);
+  async getGoal(query) {
+    if (query.year && query.month) {
+      if (query.userId) {
+        return goalRepository.findByYearMonth(query.year, query.month, query.userId);
+      }
+      return goalRepository.findAll(query);
     }
-    return goalRepository.findAll();
+    return goalRepository.findAll(query);
   },
 
   async createGoal(data, requestingUser, req) {
-    const existing = await goalRepository.findByYearMonth(data.year, data.month);
+    const existing = await goalRepository.findByYearMonth(data.year, data.month, data.userId || null);
     if (existing) {
-      throw new ConflictError(`Ya existe una meta para ${data.month}/${data.year}`);
+      throw new ConflictError(`Ya existe una meta para ${data.month}/${data.year}${data.userId ? ' para este usuario' : ''}`);
     }
 
     const goal = await goalRepository.create({ ...data, createdBy: requestingUser.id });
@@ -25,11 +28,11 @@ export const goalService = {
       module: 'goals',
       action: 'CREATE',
       entityId: goal._id,
-      after: { year: goal.year, month: goal.month, revenueTarget: goal.revenueTarget },
+      after: { year: goal.year, month: goal.month, revenueTarget: goal.revenueTarget, userId: goal.userId },
       req,
     });
 
-    return goal;
+    return goalRepository.findById(goal._id);
   },
 
   async updateGoal(id, data, requestingUser, req) {
@@ -51,5 +54,22 @@ export const goalService = {
     });
 
     return updated;
+  },
+
+  async deleteGoal(id, requestingUser, req) {
+    const goal = await goalRepository.findById(id);
+    if (!goal) throw new NotFoundError('Meta no encontrada');
+
+    await goalRepository.remove(id);
+
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'goals',
+      action: 'DELETE',
+      entityId: id,
+      before: { year: goal.year, month: goal.month, revenueTarget: goal.revenueTarget, userId: goal.userId },
+      req,
+    });
   },
 };

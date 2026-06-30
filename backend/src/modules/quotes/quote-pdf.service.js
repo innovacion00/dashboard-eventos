@@ -53,15 +53,15 @@ const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', 
 const TERMS = [
   {
     title: 'Reserva del evento',
-    body: 'La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.',
+    body: `La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.`,
   },
   {
     title: 'Forma de pago y garantía',
-    body: 'Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.',
+    body: `Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.`,
   },
   {
     title: 'Política de cancelación',
-    body: 'La cancelación debe informarse por escrito a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.',
+    body: `La cancelación debe informarse por escrito a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.`,
   },
   {
     title: 'Montaje y proveedores',
@@ -168,7 +168,7 @@ function buildHtml(quote) {
       <span style="font-size:12px; color:#8A8378; white-space:nowrap; padding-left:20px;">Bogotá D.C. · ${quoteDate}</span>
     </div>
 
-    <div style="margin-top:26px; display:flex; flex-direction:column; gap:18px; font-size:14.5px; line-height:1.75; color:#46423B; max-width:62ch;">
+    <div style="margin-top:26px; display:flex; flex-direction:column; gap:18px; font-size:14.5px; line-height:1.75; color:#46423B; max-width:62ch; text-align:justify;">
       <p style="margin:0;">Reciba un afectuoso saludo y nuestro más sincero agradecimiento por su interés en el <strong style="color:#2A2723; font-weight:700;">Hotel Windsor House</strong> como un lugar apropiado para su evento. Queremos darle la bienvenida a nuestro hotel con las puertas abiertas, donde será para nosotros un honor ofrecerle un exclusivo y excelente servicio con un personal profesional y altamente calificado.</p>
       <p style="margin:0;">Nos encontramos en la <strong style="color:#2A2723; font-weight:600;">Cl. 95 #9-97, Chapinero, Bogotá, Colombia</strong>. Con una excelente ubicación en el norte de la ciudad, a solo diez minutos del Parque de la 93, muy cerca de la Zona T y de entidades financieras, centros de negocios, zonas de entretenimiento y casinos.</p>
     </div>
@@ -285,6 +285,15 @@ function buildHtml(quote) {
 
     <div style="margin-top:14px; padding:22px 26px; background:#FAF7EF; border:1px solid #ECE5D5; border-radius:5px;">
       <p style="margin:0; font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.7; color:#46423B; text-align:center; font-style:italic;">Esperamos servirle con el mayor profesionalismo y buen servicio que nos caracteriza, para que su actividad se desarrolle a la perfección. El Hotel Windsor House lo invita a conocer nuestras instalaciones; estamos para servirle las 24 horas del día. ¡Muchas gracias!</p>
+    </div>
+
+    <div style="margin-top:auto; padding-top:28px; text-align:center;">
+      <div style="display:inline-block; text-align:center;">
+        <div style="width:220px; border-top:1px solid #A17C2D; margin:0 auto 8px;"></div>
+        <div style="font-size:13px; font-weight:700; color:#2A2723;">${esc(quote.createdBy?.name || '')}</div>
+        <div style="font-size:11px; color:#A17C2D; margin-top:2px;">${esc(quote.createdBy?.email || '')}</div>
+        <div style="font-size:10px; color:#8A8378; margin-top:2px;">Hotel Windsor House</div>
+      </div>
     </div>
   </div>
   <div class="footer" style="margin-top:28px;">
