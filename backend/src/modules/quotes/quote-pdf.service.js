@@ -50,32 +50,34 @@ function esc(str) {
 
 const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', EXTERNO: 'Externo' };
 
-const TERMS = [
-  {
-    title: 'Reserva del evento',
-    body: `La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.`,
-  },
-  {
-    title: 'Forma de pago y garantía',
-    body: `Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.`,
-  },
-  {
-    title: 'Política de cancelación',
-    body: `La cancelación debe informarse por escrito a <strong style="color:#2A2723;">${CONTACT_EMAIL}</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.`,
-  },
-  {
-    title: 'Montaje y proveedores',
-    body: 'Todo ingreso de material, elementos de montaje, pendones y equipos audiovisuales debe hacerse por la entrada al parqueadero del hotel, con el documento de relación de personal y material. El hotel no se hace responsable de ningún material o equipo; éstos deben ser retirados por el responsable una vez finalizado el evento.',
-  },
-  {
-    title: 'Modificaciones',
-    body: 'Cualquier cambio en los alimentos debe solicitarse por escrito máximo 72 horas antes del evento para actualizar la cotización y el pago. La cantidad de personas cotizadas será la que se permita ingresar el día del evento, por orden de llegada; contamos con capacidad de reacción del 10%. Cambios de montaje deben informarse antes de 72 horas; modificaciones totales de último momento tendrán costo adicional.',
-  },
-  {
-    title: 'Logística',
-    body: 'Si con motivo de la realización del evento el contratante, sus representantes o invitados ocasionan daños a las instalaciones del hotel o a equipos de alquiler, el contratante asumirá los gastos de reparación correspondientes.',
-  },
-];
+function getTerms(contactEmail) {
+  return [
+    {
+      title: 'Reserva del evento',
+      body: `La cotización no implica reserva del salón, únicamente una pre-reserva que bloqueará la fecha para hacerle seguimiento hasta su confirmación formal. En caso de ser considerados su mejor opción, solicitamos enviar al correo <strong style="color:#2A2723;">${contactEmail}</strong> la confirmación con los comentarios necesarios, mínimo con doce (12) días de anticipación.`,
+    },
+    {
+      title: 'Forma de pago y garantía',
+      body: `Una vez enviada la solicitud formal de confirmación, para dar inicio a los preparativos se debe haber pagado el 100% del valor del evento, mínimo 72 horas antes, y enviado el soporte de pago a <strong style="color:#2A2723;">${contactEmail}</strong>. Pueden realizar abonos del 25% hasta completar el 100% si confirman la fecha con al menos tres (3) meses de anticipación.`,
+    },
+    {
+      title: 'Política de cancelación',
+      body: `La cancelación debe informarse por escrito a <strong style="color:#2A2723;">${contactEmail}</strong>: eventos corporativos con 5 días hábiles de anticipación y sociales con 8 días hábiles. De no ser así, se cobrará una penalización del 60% del valor pagado si no incluye alimentos; si los incluye y la inversión ya se ejecutó, se cobrará el 100% por alimentos, bebidas y decoración ejecutados, de los cuales podrán hacer uso.`,
+    },
+    {
+      title: 'Montaje y proveedores',
+      body: 'Todo ingreso de material, elementos de montaje, pendones y equipos audiovisuales debe hacerse por la entrada al parqueadero del hotel, con el documento de relación de personal y material. El hotel no se hace responsable de ningún material o equipo; éstos deben ser retirados por el responsable una vez finalizado el evento.',
+    },
+    {
+      title: 'Modificaciones',
+      body: 'Cualquier cambio en los alimentos debe solicitarse por escrito máximo 72 horas antes del evento para actualizar la cotización y el pago. La cantidad de personas cotizadas será la que se permita ingresar el día del evento, por orden de llegada; contamos con capacidad de reacción del 10%. Cambios de montaje deben informarse antes de 72 horas; modificaciones totales de último momento tendrán costo adicional.',
+    },
+    {
+      title: 'Logística',
+      body: 'Si con motivo de la realización del evento el contratante, sus representantes o invitados ocasionan daños a las instalaciones del hotel o a equipos de alquiler, el contratante asumirá los gastos de reparación correspondientes.',
+    },
+  ];
+}
 
 function buildHtml(quote) {
   const companyName = esc(quote.companyId?.name || quote.company?.name || '—');
@@ -122,7 +124,8 @@ function buildHtml(quote) {
        </div>`
     : '';
 
-  const termsHtml = TERMS.map(t => `
+  const creatorEmail = quote.createdBy?.email || CONTACT_EMAIL;
+  const termsHtml = getTerms(creatorEmail).map(t => `
     <div style="break-inside:avoid; margin-bottom:18px;">
       <div style="font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#A17C2D; font-weight:800; margin-bottom:6px;">${esc(t.title)}</div>
       <p style="margin:0; font-size:11px; line-height:1.62; color:#46423B; text-align:justify;">${t.body}</p>
@@ -287,8 +290,13 @@ function buildHtml(quote) {
       <p style="margin:0; font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.7; color:#46423B; text-align:center; font-style:italic;">Esperamos servirle con el mayor profesionalismo y buen servicio que nos caracteriza, para que su actividad se desarrolle a la perfección. El Hotel Windsor House lo invita a conocer nuestras instalaciones; estamos para servirle las 24 horas del día. ¡Muchas gracias!</p>
     </div>
 
-    <div style="margin-top:auto; padding-top:28px; text-align:center;">
-      <div style="display:inline-block; text-align:center;">
+    <div style="margin-top:auto; padding-top:28px; display:flex; justify-content:space-around; gap:24px;">
+      <div style="text-align:center;">
+        <div style="width:220px; border-top:1px solid #A17C2D; margin:0 auto 8px;"></div>
+        <div style="font-size:13px; font-weight:700; color:#2A2723;">${companyName}</div>
+        <div style="font-size:10px; color:#8A8378; margin-top:2px;">Firma autorizada — Empresa</div>
+      </div>
+      <div style="text-align:center;">
         <div style="width:220px; border-top:1px solid #A17C2D; margin:0 auto 8px;"></div>
         <div style="font-size:13px; font-weight:700; color:#2A2723;">${esc(quote.createdBy?.name || '')}</div>
         <div style="font-size:11px; color:#A17C2D; margin-top:2px;">${esc(quote.createdBy?.email || '')}</div>

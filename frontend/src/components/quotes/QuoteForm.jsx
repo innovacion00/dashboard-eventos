@@ -7,9 +7,19 @@ import { catalogsApi } from '../../lib/api/catalogs.api.js';
 import { Button } from '../ui/Button.jsx';
 import { Alert } from '../ui/Alert.jsx';
 import { formatCurrency } from '../../lib/utils/format.js';
+import { availabilityApi } from '../../lib/api/availability.api.js';
 
 const CATEGORY_LABELS = { SALON: 'Salón', AB: 'A&B', AV: 'AV', OTROS: 'Otros', EXTERNO: 'Externo' };
 const CATEGORY_KEYS = ['SALON', 'AB', 'AV', 'OTROS', 'EXTERNO'];
+
+const ROOM_IMAGES = {
+  '129033': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Doble%20estandar%20twin.jpg', name: 'Doble estándar twin' },
+  '128299': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Doble%20Superior.jpg', name: 'Doble Superior' },
+  '129035': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Doble%20Junior%20Suite.jpg', name: 'Doble Junior Suite' },
+  '129036': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Doble%20Junior%20Twin.jpg', name: 'Doble Junior Twin' },
+  '129037': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Suite%20Matrimonial.jpg', name: 'Suite Matrimonial' },
+  '129034': { url: 'https://space-img.sfo3.digitaloceanspaces.com/Hoteles%20y%20habitaciones/habitaciones%20windsor/Triple%20Estandar%20altillo%20con%20escaleras.jpg', name: 'Triple Estándar altillo con escaleras' },
+};
 
 export function QuoteForm({ quoteId, onSaved, onCancel }) {
   const isEdit = Boolean(quoteId);
@@ -36,6 +46,13 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
   const [rooms, setRooms] = useState([]);
   const [services, setServices] = useState([]);
   const [eventTypes, setEventTypes] = useState([]);
+  const [collapsedCategories, setCollapsedCategories] = useState({});
+  const [showLodging, setShowLodging] = useState(false);
+  const [lodging, setLodging] = useState({ checkIn: '', nights: '', adults: '', children: '' });
+  const [lodgingResults, setLodgingResults] = useState(null);
+  const [lodgingLoading, setLodgingLoading] = useState(false);
+  const [lodgingError, setLodgingError] = useState('');
+  const [lodgingSelections, setLodgingSelections] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -112,6 +129,33 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
   const updateSel = (svcId, field, value) =>
     setSelections(prev => ({ ...prev, [svcId]: { ...prev[svcId], [field]: value } }));
 
+  const toggleCategory = (cat) =>
+    setCollapsedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+
+  const handleCheckAvailability = async () => {
+    if (!lodging.checkIn || !lodging.nights || !lodging.adults) {
+      setLodgingError('Completa fecha de check in, noches y adultos.');
+      return;
+    }
+    setLodgingLoading(true);
+    setLodgingError('');
+    setLodgingResults(null);
+    try {
+      const res = await availabilityApi.check({
+        checkIn: lodging.checkIn,
+        nights: lodging.nights,
+        adults: lodging.adults,
+        childrenAges: lodging.children || 0,
+      });
+      setLodgingResults(res.data);
+      setLodgingSelections({});
+    } catch (e) {
+      setLodgingError(e.message || 'Error al consultar disponibilidad');
+    } finally {
+      setLodgingLoading(false);
+    }
+  };
+
   const servicesByCategory = services.reduce((acc, s) => {
     if (!acc[s.category]) acc[s.category] = [];
     acc[s.category].push(s);
@@ -139,6 +183,24 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
       if (tipAmount > 0) {
         baseItems.push({ description: 'Propina', category: 'AB', quantity: 1, unitPrice: tipAmount });
       }
+    }
+
+    // Lodging items from Autocore availability
+    if (lodgingResults) {
+      lodgingResults.rooms.forEach(room => {
+        const qty = lodgingSelections[room.roomId] || 0;
+        if (qty > 0) {
+          const img = ROOM_IMAGES[room.roomId];
+          const roomLabel = img?.name || room.roomName;
+          const nights = Number(lodging.nights) || 1;
+          baseItems.push({
+            description: `Hospedaje — ${roomLabel} (${nights} noche${nights > 1 ? 's' : ''})`,
+            category: 'EXTERNO',
+            quantity: qty,
+            unitPrice: room.amountBeforeTax,
+          });
+        }
+      });
     }
 
     return baseItems;
@@ -244,6 +306,9 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
           const catServices = servicesByCategory[cat] || [];
           if (catServices.length === 0) return null;
 
+          const isCollapsed = Boolean(collapsedCategories[cat]);
+          const selectedCount = catServices.filter(svc => selections[String(svc._id || svc.id)]).length;
+
           return (
             <div key={cat} style={{
               marginBottom: 'var(--space-4)',
@@ -251,19 +316,39 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
               borderRadius: 'var(--radius-md)',
               overflow: 'hidden',
             }}>
-              <div style={{
-                padding: 'var(--space-2) var(--space-4)',
-                background: 'var(--color-gray-1)',
-                fontWeight: 'var(--font-semibold)',
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-gold-dark)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                borderBottom: '1px solid var(--color-border)',
-              }}>
-                {CATEGORY_LABELS[cat]}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleCategory(cat)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-2)',
+                  padding: 'var(--space-2) var(--space-4)',
+                  background: 'var(--color-gray-1)',
+                  fontWeight: 'var(--font-semibold)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-gold-dark)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  borderBottom: isCollapsed ? 'none' : '1px solid var(--color-border)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ display: 'inline-block', transition: 'transform 0.15s', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                  ▾
+                </span>
+                <span style={{ flex: 1 }}>{CATEGORY_LABELS[cat]}</span>
+                {selectedCount > 0 && (
+                  <span className="badge badge-success" style={{ textTransform: 'none', letterSpacing: 'normal' }}>
+                    {selectedCount} seleccionado{selectedCount > 1 ? 's' : ''}
+                  </span>
+                )}
+              </button>
 
+              {!isCollapsed && (
               <div style={{ padding: 'var(--space-3) var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                 {catServices.map(svc => {
                   const svcId = String(svc._id || svc.id);
@@ -329,9 +414,172 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
                   );
                 })}
               </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      <div style={{
+        marginBottom: 'var(--space-4)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-md)',
+        overflow: 'hidden',
+      }}>
+        <button
+          type="button"
+          onClick={() => setShowLodging(s => !s)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-2) var(--space-4)',
+            background: 'var(--color-gray-1)',
+            fontWeight: 'var(--font-semibold)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-gold-dark)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            borderBottom: showLodging ? '1px solid var(--color-border)' : 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ display: 'inline-block', transition: 'transform 0.15s', transform: showLodging ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+            ▾
+          </span>
+          <span style={{ flex: 1 }}>Hospedaje</span>
+        </button>
+
+        {showLodging && (
+          <div style={{ padding: 'var(--space-4)' }}>
+            <div className="form-grid-2">
+              <div className="input-field">
+                <label className="input-label">Fecha de check in</label>
+                <input className="input-control" type="date" value={lodging.checkIn}
+                  onChange={e => setLodging(l => ({ ...l, checkIn: e.target.value }))} />
+              </div>
+              <div className="input-field">
+                <label className="input-label">Número de noches</label>
+                <input className="input-control" type="number" min="1" value={lodging.nights}
+                  onChange={e => setLodging(l => ({ ...l, nights: e.target.value }))} />
+              </div>
+              <div className="input-field">
+                <label className="input-label">Número de adultos</label>
+                <input className="input-control" type="number" min="0" value={lodging.adults}
+                  onChange={e => setLodging(l => ({ ...l, adults: e.target.value }))} />
+              </div>
+              <div className="input-field">
+                <label className="input-label">Número de niños</label>
+                <input className="input-control" type="number" min="0" value={lodging.children}
+                  onChange={e => setLodging(l => ({ ...l, children: e.target.value }))} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
+              <Button type="button" variant="secondary" loading={lodgingLoading} onClick={handleCheckAvailability}>
+                Consultar
+              </Button>
+            </div>
+
+            {lodgingError && (
+              <p style={{ color: 'var(--color-danger)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+                {lodgingError}
+              </p>
+            )}
+
+            {lodgingResults && (
+              <div style={{ marginTop: 'var(--space-4)' }}>
+                {lodgingResults.rooms.length === 0 ? (
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                    No hay habitaciones estándar disponibles para las fechas seleccionadas.
+                  </p>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
+                      {lodgingResults.rooms.length} habitación(es) estándar disponibles:
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                      {lodgingResults.rooms.map((room, idx) => {
+                        const img = ROOM_IMAGES[room.roomId];
+                        const qty = lodgingSelections[room.roomId] || 0;
+                        const isSelected = qty > 0;
+                        const maxQty = room.count || 1;
+
+                        const changeQty = (delta) => {
+                          const next = Math.min(Math.max(qty + delta, 0), maxQty);
+                          setLodgingSelections(prev => {
+                            const updated = { ...prev };
+                            if (next === 0) delete updated[room.roomId];
+                            else updated[room.roomId] = next;
+                            return updated;
+                          });
+                        };
+
+                        return (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            gap: 'var(--space-3)',
+                            alignItems: 'center',
+                            background: isSelected ? 'var(--color-gold-subtle)' : 'var(--color-surface)',
+                            border: `1px solid ${isSelected ? 'var(--color-gold-dark)' : 'var(--color-border)'}`,
+                            borderRadius: 'var(--radius-md)',
+                            overflow: 'hidden',
+                            transition: 'background 0.15s, border-color 0.15s',
+                          }}>
+                            {img ? (
+                              <img src={img.url} alt={img.name}
+                                style={{ width: 110, height: 80, objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 110, height: 80, background: 'var(--color-gray-1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Sin imagen</span>
+                              </div>
+                            )}
+
+                            <div style={{ flex: 1, padding: 'var(--space-2) 0' }}>
+                              <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-text)' }}>
+                                {img?.name || room.roomName}
+                              </div>
+                              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                {room.boardTypeDescription}
+                              </div>
+                              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                Disponibles: {maxQty}
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right', padding: 'var(--space-2) var(--space-3)', flexShrink: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>
+                                {formatCurrency(room.amountBeforeTax)}
+                              </div>
+                              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
+                                antes de impuestos
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => changeQty(-1)} disabled={qty === 0}
+                                  style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-white)', cursor: qty === 0 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 16, opacity: qty === 0 ? 0.4 : 1 }}>
+                                  −
+                                </button>
+                                <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 700, fontSize: 'var(--text-sm)' }}>
+                                  {qty}
+                                </span>
+                                <button type="button" onClick={() => changeQty(1)} disabled={qty >= maxQty}
+                                  style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-white)', cursor: qty >= maxQty ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 16, opacity: qty >= maxQty ? 0.4 : 1 }}>
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div style={{

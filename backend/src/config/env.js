@@ -24,6 +24,12 @@ export const env = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@gehsuites.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
 
+  AUTOCORE_ACCESS_KEY: process.env.AUTOCORE_ACCESS_KEY || '',
+  AUTOCORE_SECRET_KEY: process.env.AUTOCORE_SECRET_KEY || '',
+  AUTOCORE_BEARER_TOKEN: process.env.AUTOCORE_BEARER_TOKEN || '',
+  AUTOCORE_HOTEL_ID: process.env.AUTOCORE_HOTEL_ID || '18004',
+  AUTOCORE_API_URL: process.env.AUTOCORE_API_URL || 'https://api.autocore.pro/v2',
+
   GMAIL_USER: process.env.GMAIL_USER || '',
   GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID || '',
   GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || '',
