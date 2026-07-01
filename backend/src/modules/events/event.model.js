@@ -36,9 +36,11 @@ eventSchema.index({ ownerId: 1 });
 
 eventSchema.pre('save', async function (next) {
   if (this.isNew && !this.number) {
+    const { nextSequence } = await import('../../core/utils/next-sequence.js');
     const year = new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    this.number = `EVT-${year}-${String(count + 1).padStart(4, '0')}`;
+    const prefix = `EVT-${year}-`;
+    const seq = await nextSequence(this.constructor, prefix);
+    this.number = `${prefix}${String(seq).padStart(4, '0')}`;
   }
   next();
 });

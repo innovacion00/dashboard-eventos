@@ -46,7 +46,9 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
   const [rooms, setRooms] = useState([]);
   const [services, setServices] = useState([]);
   const [eventTypes, setEventTypes] = useState([]);
-  const [collapsedCategories, setCollapsedCategories] = useState({});
+  const [collapsedCategories, setCollapsedCategories] = useState(
+    Object.fromEntries(CATEGORY_KEYS.map(k => [k, true]))
+  );
   const [showLodging, setShowLodging] = useState(false);
   const [lodging, setLodging] = useState({ checkIn: '', nights: '', adults: '', children: '' });
   const [lodgingResults, setLodgingResults] = useState(null);
@@ -71,11 +73,26 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
   }, []);
 
   useEffect(() => {
-    if (form.companyId) {
-      companiesApi.listOpportunities(form.companyId, { limit: 50 })
-        .then(res => setOpportunities(res.data || []))
-        .catch(() => {});
-    }
+    if (!form.companyId) return;
+    Promise.all([
+      companiesApi.listOpportunities(form.companyId, { limit: 50 }),
+      quotesApi.list({ companyId: form.companyId, limit: 200 }),
+    ]).then(([oppRes, quotesRes]) => {
+      const opps = oppRes.data || [];
+      const quotes = quotesRes.data || [];
+      // IDs de oportunidades que ya tienen cotización (excluir la actual en modo edición)
+      const takenOppIds = new Set(
+        quotes
+          .filter(q => q.opportunityId && (!isEdit || q.id !== quoteId))
+          .map(q => {
+            const o = q.opportunityId;
+            return typeof o === 'object' ? (o._id || o.id) : o;
+          })
+          .filter(Boolean)
+          .map(String)
+      );
+      setOpportunities(opps.filter(o => !takenOppIds.has(String(o._id || o.id))));
+    }).catch(() => {});
   }, [form.companyId]);
 
   useEffect(() => {
@@ -222,6 +239,8 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     try {
       const payload = {
         ...form,
+        roomId: form.roomId || undefined,
+        opportunityId: form.opportunityId || undefined,
         attendees: form.attendees ? Number(form.attendees) : undefined,
         eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : undefined,
         validUntil: form.validUntil ? new Date(form.validUntil).toISOString() : undefined,

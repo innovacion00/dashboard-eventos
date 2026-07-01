@@ -80,9 +80,11 @@ beoSchema.index({ eventId: 1, category: 1 });
 
 beoSchema.pre('save', async function (next) {
   if (this.isNew && !this.number) {
+    const { nextSequence } = await import('../../core/utils/next-sequence.js');
     const year = new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    this.number = `BEO-${year}-${String(count + 1).padStart(4, '0')}`;
+    const prefix = `BEO-${year}-`;
+    const seq = await nextSequence(this.constructor, prefix);
+    this.number = `${prefix}${String(seq).padStart(4, '0')}`;
   }
   if (this.isModified('status') && this.status === 'EMITIDO' && !this.issuedAt) {
     this.issuedAt = new Date();

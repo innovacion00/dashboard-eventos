@@ -62,11 +62,12 @@ quoteSchema.pre('save', async function (next) {
   this.taxAmount = Math.round((this.ivaAmount + this.icoAmount) * 100) / 100;
   this.total     = Math.round((subtotal + this.taxAmount) * 100) / 100;
 
-  // Auto-generate quote number on creation
   if (this.isNew && !this.number) {
+    const { nextSequence } = await import('../../core/utils/next-sequence.js');
     const year = new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    this.number = `COT-${year}-${String(count + 1).padStart(4, '0')}`;
+    const prefix = `COT-${year}-`;
+    const seq = await nextSequence(this.constructor, prefix);
+    this.number = `${prefix}${String(seq).padStart(4, '0')}`;
   }
   next();
 });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoicesApi } from '../../lib/api/invoices.api.js';
+import { beosApi } from '../../lib/api/beos.api.js';
 import { Alert } from '../ui/Alert.jsx';
 import { Button } from '../ui/Button.jsx';
 import '../ui/Table.css';
@@ -41,8 +42,13 @@ const EMPTY_PAYMENT = {
 const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 const FILE_ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, '');
 
+const BEO_CATEGORY_LABEL = { SALON: 'Montaje', AB: 'A&B', AV: 'AV', OTROS: 'Personal', EXTERNO: 'Externo' };
+const BEO_STATUS_LABEL = { BORRADOR: 'Borrador', EMITIDO: 'Emitido', CONFIRMADO: 'Confirmado' };
+const BEO_STATUS_VARIANT = { BORRADOR: 'neutral', EMITIDO: 'warning', CONFIRMADO: 'success' };
+
 export function InvoiceDetail({ id }) {
   const [invoice, setInvoice] = useState(null);
+  const [beos, setBeos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -56,6 +62,10 @@ export function InvoiceDetail({ id }) {
     try {
       const res = await invoicesApi.getById(id);
       setInvoice(res.data);
+      if (res.data?.event?.id) {
+        const beoRes = await beosApi.getByEvent(res.data.event.id).catch(() => ({ data: [] }));
+        setBeos(beoRes.data || []);
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -141,12 +151,72 @@ export function InvoiceDetail({ id }) {
 
       <div className="detail-grid">
         <div className="info-row"><span>Empresa</span><strong>{invoice.company?.name}</strong></div>
-        <div className="info-row"><span>Evento</span><strong>{invoice.event?.number} — {invoice.event?.name}</strong></div>
-        {invoice.quote && <div className="info-row"><span>Cotización</span><strong>{invoice.quote.number}</strong></div>}
+        <div className="info-row">
+          <span>Evento</span>
+          <strong>
+            <a href={`/eventos/${invoice.event?.id}`} style={{ color: 'var(--color-primary)' }}>
+              {invoice.event?.number} — {invoice.event?.name}
+            </a>
+          </strong>
+        </div>
         <div className="info-row"><span>Fecha emisión</span><strong>{formatDate(invoice.issueDate)}</strong></div>
         {invoice.dueDate && <div className="info-row"><span>Vencimiento</span><strong>{formatDate(invoice.dueDate)}</strong></div>}
         {invoice.notes && <div className="info-row"><span>Notas</span><span>{invoice.notes}</span></div>}
       </div>
+
+      {(invoice.quote || beos.length > 0) && (
+        <div style={{ margin: 'var(--space-5) 0' }}>
+          <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 'var(--space-3)' }}>
+            Documentos relacionados
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {invoice.quote && (
+              <a href={`/cotizaciones/${invoice.quote.id}`} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: 'var(--space-3) var(--space-4)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-surface)',
+                textDecoration: 'none',
+                color: 'var(--color-text)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cotización</span>
+                  <strong style={{ color: 'var(--color-primary)' }}>{invoice.quote.number}</strong>
+                </div>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Ver →</span>
+              </a>
+            )}
+            {beos.map(beo => (
+              <a key={beo.id} href={`/eventos/${invoice.event?.id}?tab=beo`} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: 'var(--space-3) var(--space-4)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-surface)',
+                textDecoration: 'none',
+                color: 'var(--color-text)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Orden de servicio
+                  </span>
+                  <strong>{beo.number}</strong>
+                  <span className="badge badge-neutral" style={{ fontSize: 'var(--text-xs)' }}>
+                    {BEO_CATEGORY_LABEL[beo.category] || beo.category}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <span className={`badge badge-${BEO_STATUS_VARIANT[beo.status] || 'neutral'}`} style={{ fontSize: 'var(--text-xs)' }}>
+                    {BEO_STATUS_LABEL[beo.status] || beo.status}
+                  </span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Ver →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="invoice-totals" style={{ maxWidth: 400, margin: 'var(--space-5) 0' }}>
         <div className="invoice-total-row"><span>Subtotal</span><strong>{formatCurrency(invoice.subtotal)}</strong></div>
