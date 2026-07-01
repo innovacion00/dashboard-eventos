@@ -12,6 +12,13 @@ const lineItemSchema = new mongoose.Schema({
   category: { type: String, enum: ITEM_CATEGORIES, default: 'OTROS' },
 });
 
+const lodgingParamsSchema = new mongoose.Schema({
+  checkIn:  { type: String },
+  nights:   { type: Number },
+  adults:   { type: Number },
+  children: { type: Number },
+}, { _id: false });
+
 const quoteSchema = new mongoose.Schema(
   {
     number: { type: String, unique: true },
@@ -32,6 +39,7 @@ const quoteSchema = new mongoose.Schema(
     ivaAmount: { type: Number, default: 0 },
     taxAmount: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
+    lodging: { type: lodgingParamsSchema },
     notes: { type: String },
     internalNotes: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

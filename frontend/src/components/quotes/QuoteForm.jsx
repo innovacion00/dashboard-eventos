@@ -125,6 +125,14 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         setSelections(newSel);
         const hasTip = (q.items || []).some(i => i.description === 'Propina' && i.category === 'AB');
         setIncludeTip(hasTip);
+        if (q.lodging) {
+          setLodging({
+            checkIn:  q.lodging.checkIn  || '',
+            nights:   q.lodging.nights   != null ? String(q.lodging.nights)   : '',
+            adults:   q.lodging.adults   != null ? String(q.lodging.adults)   : '',
+            children: q.lodging.children != null ? String(q.lodging.children) : '',
+          });
+        }
       }).catch(() => {});
     }
   }, [quoteId]);
@@ -245,6 +253,12 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
         attendees: form.attendees ? Number(form.attendees) : undefined,
         eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : undefined,
         validUntil: form.validUntil ? new Date(form.validUntil).toISOString() : undefined,
+        lodging: lodging.checkIn ? {
+          checkIn:  lodging.checkIn,
+          nights:   lodging.nights   ? Number(lodging.nights)   : undefined,
+          adults:   lodging.adults   ? Number(lodging.adults)   : undefined,
+          children: lodging.children ? Number(lodging.children) : undefined,
+        } : undefined,
         items,
       };
       if (isEdit) {

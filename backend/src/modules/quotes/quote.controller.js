@@ -77,6 +77,7 @@ function mapQuote(q) {
     ivaAmount: q.ivaAmount,
     taxAmount: q.taxAmount,
     total: q.total,
+    lodging: q.lodging ?? null,
     notes: q.notes,
     internalNotes: q.internalNotes,
     createdBy: q.createdBy,
