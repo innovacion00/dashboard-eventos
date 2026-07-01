@@ -11,7 +11,7 @@ import { EventCost } from '../modules/event-costs/event-cost.model.js';
 import { Invoice } from '../modules/invoices/invoice.model.js';
 import { Contact } from '../modules/contacts/contact.model.js';
 
-const COMPANY_NAMES = ['camilo prueba'];
+const COMPANY_NAMES = ['sebas keke'];
 
 async function cleanup() {
   await mongoose.connect(env.MONGO_URI);

@@ -24,6 +24,13 @@ export const env = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@gehsuites.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
 
+  SPACES_KEY: process.env.SPACES_KEY || '',
+  SPACES_SECRET: process.env.SPACES_SECRET || '',
+  SPACES_ENDPOINT: process.env.SPACES_ENDPOINT || 'https://nyc3.digitaloceanspaces.com',
+  SPACES_REGION: process.env.SPACES_REGION || 'nyc3',
+  SPACES_BUCKET: process.env.SPACES_BUCKET || '',
+  SPACES_CDN_URL: process.env.SPACES_CDN_URL || '',
+
   AUTOCORE_ACCESS_KEY: process.env.AUTOCORE_ACCESS_KEY || '',
   AUTOCORE_SECRET_KEY: process.env.AUTOCORE_SECRET_KEY || '',
   AUTOCORE_BEARER_TOKEN: process.env.AUTOCORE_BEARER_TOKEN || '',

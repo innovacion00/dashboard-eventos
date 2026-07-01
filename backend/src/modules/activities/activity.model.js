@@ -12,6 +12,7 @@ const activitySchema = new mongoose.Schema(
     nextActionAt: { type: Date },
     completed: { type: Boolean, default: true },
     attachments: [{
+      url: { type: String },
       filename: { type: String },
       originalName: { type: String },
       mimetype: { type: String },

@@ -12,4 +12,6 @@ export const invoicesApi = {
   addPayment: (id, formData) => api.postForm(`/invoices/${id}/payments`, formData),
   cancelPayment: (invoiceId, paymentId) => api.delete(`/invoices/${invoiceId}/payments/${paymentId}`),
   remove: (id) => api.delete(`/invoices/${id}`),
+  addDocument: (id, formData) => api.postForm(`/invoices/${id}/documents`, formData),
+  removeDocument: (id, docId) => api.delete(`/invoices/${id}/documents/${docId}`),
 };

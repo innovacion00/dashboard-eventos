@@ -39,12 +39,16 @@ const EMPTY_PAYMENT = {
   notes: '',
 };
 
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-const FILE_ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, '');
 
 const BEO_CATEGORY_LABEL = { SALON: 'Montaje', AB: 'A&B', AV: 'AV', OTROS: 'Personal', EXTERNO: 'Externo' };
 const BEO_STATUS_LABEL = { BORRADOR: 'Borrador', EMITIDO: 'Emitido', CONFIRMADO: 'Confirmado' };
 const BEO_STATUS_VARIANT = { BORRADOR: 'neutral', EMITIDO: 'warning', CONFIRMADO: 'success' };
+
+const DOC_TYPES = [
+  { key: 'RETENCION', label: 'Certificados de retención' },
+  { key: 'EVIDENCIA_FOTOGRAFICA', label: 'Evidencias fotográficas' },
+  { key: 'EVIDENCIA_FACTURA', label: 'Evidencias de factura' },
+];
 
 export function InvoiceDetail({ id }) {
   const [invoice, setInvoice] = useState(null);
@@ -310,7 +314,7 @@ export function InvoiceDetail({ id }) {
                     <td>{formatCurrency(p.amount)}</td>
                     <td>
                       {p.file ? (
-                        <a href={`${FILE_ORIGIN}${p.file}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Ver</a>
+                        <a href={p.file} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Ver</a>
                       ) : '—'}
                     </td>
                     <td><span className={`badge badge-${p.status === 'ANULADO' ? 'danger' : 'success'}`}>{p.status}</span></td>
@@ -327,6 +331,114 @@ export function InvoiceDetail({ id }) {
             </table>
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 'var(--space-6)' }}>
+        <h2 style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--text-lg)' }}>Documentos</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {DOC_TYPES.map(({ key, label }) => {
+            const docs = (invoice.documents || []).filter(d => d.type === key);
+            return (
+              <DocSection
+                key={key}
+                label={label}
+                docType={key}
+                docs={docs}
+                invoiceId={id}
+                onReload={load}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocSection({ label, docType, docs, invoiceId, onReload }) {
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('type', docType);
+      await invoicesApi.addDocument(invoiceId, fd);
+      setFile(null);
+      await onReload();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async (docId) => {
+    if (!confirm(`¿Eliminar este documento?`)) return;
+    try {
+      await invoicesApi.removeDocument(invoiceId, docId);
+      await onReload();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  return (
+    <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+      <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>{label}</span>
+        {docs.length > 0 && (
+          <span className="badge badge-neutral">{docs.length}</span>
+        )}
+      </div>
+      <div style={{ padding: 'var(--space-4)' }}>
+        {error && <p style={{ color: 'var(--color-danger)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>{error}</p>}
+        {docs.length === 0 && <p className="text-muted" style={{ marginBottom: 'var(--space-3)' }}>Sin documentos cargados.</p>}
+        {docs.length > 0 && (
+          <div className="table-wrapper" style={{ marginBottom: 'var(--space-3)' }}>
+            <table className="table">
+              <thead>
+                <tr><th>Archivo</th><th>Fecha</th><th></th></tr>
+              </thead>
+              <tbody>
+                {docs.map(d => (
+                  <tr key={d.id}>
+                    <td>
+                      <a href={d.file} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
+                        {d.filename || 'Ver archivo'}
+                      </a>
+                    </td>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                      {d.createdAt ? new Date(d.createdAt).toLocaleDateString('es-CO') : '—'}
+                    </td>
+                    <td>
+                      <button className="link-btn" style={{ color: 'var(--color-danger)' }} onClick={() => handleRemove(d.id)}>
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            className="input-control"
+            type="file"
+            accept="image/*,.pdf"
+            style={{ flex: 1, minWidth: 200 }}
+            onChange={e => setFile(e.target.files[0] || null)}
+          />
+          <Button size="sm" variant="secondary" disabled={!file || uploading} loading={uploading} onClick={handleUpload}>
+            Subir
+          </Button>
+        </div>
       </div>
     </div>
   );

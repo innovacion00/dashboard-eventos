@@ -211,6 +211,40 @@ export const invoiceService = {
     return updated;
   },
 
+  async addDocument(id, docData, requestingUser, req) {
+    const inv = await invoiceRepository.findById(id);
+    if (!inv || !inv.active) throw new NotFoundError('Factura no encontrada');
+    inv.documents.push(docData);
+    const updated = await inv.save();
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'invoices',
+      action: 'UPDATE',
+      entityId: id,
+      after: { documentType: docData.type, filename: docData.filename },
+      req,
+    });
+    return invoiceRepository.findById(id);
+  },
+
+  async removeDocument(id, docId, requestingUser, req) {
+    const inv = await invoiceRepository.findById(id);
+    if (!inv || !inv.active) throw new NotFoundError('Factura no encontrada');
+    inv.documents.id(docId)?.deleteOne();
+    await inv.save();
+    await audit({
+      userId: requestingUser.id,
+      userEmail: requestingUser.email,
+      module: 'invoices',
+      action: 'UPDATE',
+      entityId: id,
+      after: { removedDocumentId: docId },
+      req,
+    });
+    return invoiceRepository.findById(id);
+  },
+
   async deleteInvoice(id, requestingUser, req) {
     const inv = await invoiceRepository.findById(id);
     if (!inv || !inv.active) throw new NotFoundError('Factura no encontrada');

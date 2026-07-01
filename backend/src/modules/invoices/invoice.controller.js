@@ -1,6 +1,7 @@
 import { invoiceService } from './invoice.service.js';
 import { asyncHandler } from '../../core/utils/async-handler.js';
 import { successResponse } from '../../core/utils/response.js';
+import { uploadToSpaces } from '../../core/utils/spaces.js';
 
 function mapPayment(p) {
   return {
@@ -44,6 +45,13 @@ function mapInvoice(inv) {
     paidAmount: inv.paidAmount,
     balance: inv.balance,
     payments: (inv.payments || []).map(mapPayment),
+    documents: (inv.documents || []).map(d => ({
+      id: d._id,
+      type: d.type,
+      file: d.file,
+      filename: d.filename,
+      createdAt: d.createdAt,
+    })),
     notes: inv.notes,
     createdBy: inv.createdBy,
     createdAt: inv.createdAt,
@@ -78,7 +86,10 @@ export const invoiceController = {
   }),
 
   addPayment: asyncHandler(async (req, res) => {
-    const filePath = req.file ? `/uploads/invoice-payments/${req.file.filename}` : undefined;
+    let fileUrl;
+    if (req.file) {
+      fileUrl = await uploadToSpaces(req.file.buffer, req.file.mimetype, 'invoice-payments', req.file.originalname);
+    }
     const paymentData = {
       type: req.body.type,
       amount: Number(req.body.amount),
@@ -86,7 +97,7 @@ export const invoiceController = {
       method: req.body.method,
       reference: req.body.reference || '',
       notes: req.body.notes || '',
-      file: filePath,
+      file: fileUrl,
     };
     const inv = await invoiceService.addPayment(req.params.id, paymentData, req.user, req);
     successResponse(res, mapInvoice(inv), 201);
@@ -100,5 +111,22 @@ export const invoiceController = {
   remove: asyncHandler(async (req, res) => {
     await invoiceService.deleteInvoice(req.params.id, req.user, req);
     successResponse(res, { message: 'Factura eliminada correctamente' });
+  }),
+
+  addDocument: asyncHandler(async (req, res) => {
+    if (!req.file) throw new Error('Se requiere un archivo');
+    const fileUrl = await uploadToSpaces(req.file.buffer, req.file.mimetype, 'invoice-docs', req.file.originalname);
+    const inv = await invoiceService.addDocument(req.params.id, {
+      type: req.body.type,
+      file: fileUrl,
+      filename: req.file.originalname,
+      uploadedBy: req.user.id,
+    }, req.user, req);
+    successResponse(res, mapInvoice(inv), 201);
+  }),
+
+  removeDocument: asyncHandler(async (req, res) => {
+    const inv = await invoiceService.removeDocument(req.params.id, req.params.docId, req.user, req);
+    successResponse(res, mapInvoice(inv));
   }),
 };

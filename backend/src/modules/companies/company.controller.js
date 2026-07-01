@@ -58,13 +58,12 @@ export const companyController = {
       Activity.find({ companyId: req.params.id }).sort({ date: -1 }).skip(skip).limit(limit),
       Activity.countDocuments({ companyId: req.params.id }),
     ]);
-    const base = `${req.protocol}://${req.get('host')}/uploads/activities`;
     const activities = rawActivities.map((a) => {
       const obj = a.toObject();
-      obj.attachments = (obj.attachments || []).map((att) => ({
-        ...att,
-        url: `${base}/${att.filename}`,
-      }));
+      obj.attachments = (obj.attachments || []).filter(att => {
+        const u = att.url;
+        return u && typeof u === 'string' && !u.includes('undefined') && u.startsWith('http');
+      });
       return obj;
     });
     successResponse(res, activities, 200, buildMeta(page, limit, total));

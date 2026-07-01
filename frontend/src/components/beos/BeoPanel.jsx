@@ -640,7 +640,7 @@ function BeoPayments({ beos, onReload }) {
                   {Number(p.amount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}
                 </td>
                 <td style={TD}>
-                  {p.file ? <a href={`http://localhost:4000${p.file}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Ver</a> : '—'}
+                  {p.file ? <a href={p.file} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>Ver</a> : '—'}
                 </td>
                 <td style={TD}>
                   <button className="link-btn link-btn--danger" onClick={() => handleRemove(p.beoId, p.id)}>Eliminar</button>

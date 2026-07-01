@@ -2,6 +2,7 @@ import { beoService } from './beo.service.js';
 import { generateBeoPdfBuffer } from './beo-pdf.service.js';
 import { asyncHandler } from '../../core/utils/async-handler.js';
 import { successResponse } from '../../core/utils/response.js';
+import { uploadToSpaces } from '../../core/utils/spaces.js';
 
 export const beoController = {
   getByEvent: asyncHandler(async (req, res) => {
@@ -25,14 +26,17 @@ export const beoController = {
   }),
 
   addPayment: asyncHandler(async (req, res) => {
-    const filePath = req.file ? `/uploads/beo-payments/${req.file.filename}` : undefined;
+    let fileUrl;
+    if (req.file) {
+      fileUrl = await uploadToSpaces(req.file.buffer, req.file.mimetype, 'beo-payments', req.file.originalname);
+    }
     const paymentData = {
       amount: Number(req.body.amount),
       method: req.body.method || 'TRANSFERENCIA',
       reference: req.body.reference || '',
       date: req.body.date || new Date().toISOString(),
       notes: req.body.notes || '',
-      file: filePath,
+      file: fileUrl,
       createdBy: req.user.id,
     };
     const beo = await beoService.addPayment(req.params.id, paymentData, req.user, req);

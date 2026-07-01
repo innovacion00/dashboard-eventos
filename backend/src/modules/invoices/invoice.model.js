@@ -4,6 +4,17 @@ export const INVOICE_STATUSES = ['BORRADOR', 'EMITIDA', 'PAGADA_PARCIAL', 'PAGAD
 export const PAYMENT_METHODS = ['TRANSFERENCIA', 'EFECTIVO', 'CHEQUE', 'TARJETA', 'OTRO'];
 export const PAYMENT_TYPES = ['ANTICIPO', 'PAGO_PARCIAL', 'PAGO_TOTAL', 'AJUSTE'];
 export const PAYMENT_STATUSES = ['PENDIENTE', 'RECIBIDO', 'CONCILIADO', 'ANULADO'];
+export const DOCUMENT_TYPES = ['RETENCION', 'EVIDENCIA_FOTOGRAFICA', 'EVIDENCIA_FACTURA'];
+
+const documentSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: DOCUMENT_TYPES, required: true },
+    file: { type: String, required: true },
+    filename: { type: String },
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  },
+  { timestamps: true }
+);
 
 const paymentSchema = new mongoose.Schema(
   {
@@ -40,6 +51,7 @@ const invoiceSchema = new mongoose.Schema(
     paidAmount: { type: Number, default: 0 },
     balance: { type: Number, default: 0 },
     payments: [paymentSchema],
+    documents: [documentSchema],
     notes: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     active: { type: Boolean, default: true },
