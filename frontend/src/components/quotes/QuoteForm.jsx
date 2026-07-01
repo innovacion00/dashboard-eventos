@@ -205,7 +205,8 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
     // Lodging items from Autocore availability
     if (lodgingResults) {
       lodgingResults.rooms.forEach(room => {
-        const qty = lodgingSelections[room.roomId] || 0;
+        const sel = lodgingSelections[room.roomId];
+        const qty = sel?.qty || 0;
         if (qty > 0) {
           const img = ROOM_IMAGES[room.roomId];
           const roomLabel = img?.name || room.roomName;
@@ -214,7 +215,7 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
             description: `Hospedaje — ${roomLabel} (${nights} noche${nights > 1 ? 's' : ''})`,
             category: 'EXTERNO',
             quantity: qty,
-            unitPrice: room.amountBeforeTax,
+            unitPrice: sel?.unitPrice ?? room.amountBeforeTax,
           });
         }
       });
@@ -522,7 +523,9 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                       {lodgingResults.rooms.map((room, idx) => {
                         const img = ROOM_IMAGES[room.roomId];
-                        const qty = lodgingSelections[room.roomId] || 0;
+                        const sel = lodgingSelections[room.roomId];
+                        const qty = sel?.qty || 0;
+                        const unitPrice = sel?.unitPrice ?? room.amountBeforeTax;
                         const isSelected = qty > 0;
                         const maxQty = room.count || 1;
 
@@ -531,9 +534,19 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
                           setLodgingSelections(prev => {
                             const updated = { ...prev };
                             if (next === 0) delete updated[room.roomId];
-                            else updated[room.roomId] = next;
+                            else updated[room.roomId] = {
+                              qty: next,
+                              unitPrice: prev[room.roomId]?.unitPrice ?? room.amountBeforeTax,
+                            };
                             return updated;
                           });
+                        };
+
+                        const changePrice = (value) => {
+                          setLodgingSelections(prev => ({
+                            ...prev,
+                            [room.roomId]: { ...prev[room.roomId], unitPrice: Number(value) || 0 },
+                          }));
                         };
 
                         return (
@@ -569,13 +582,10 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
                             </div>
 
                             <div style={{ textAlign: 'right', padding: 'var(--space-2) var(--space-3)', flexShrink: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--color-gold-dark)' }}>
-                                {formatCurrency(room.amountBeforeTax)}
+                              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 4 }}>
+                                Tarifa Autocore: {formatCurrency(room.amountBeforeTax)}
                               </div>
-                              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>
-                                antes de impuestos
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', justifyContent: 'flex-end', marginBottom: 'var(--space-2)' }}>
                                 <button type="button" onClick={() => changeQty(-1)} disabled={qty === 0}
                                   style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-white)', cursor: qty === 0 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 16, opacity: qty === 0 ? 0.4 : 1 }}>
                                   −
@@ -588,6 +598,20 @@ export function QuoteForm({ quoteId, onSaved, onCancel }) {
                                   +
                                 </button>
                               </div>
+                              {isSelected && (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                                  <label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Precio unitario</label>
+                                  <input
+                                    type="number" min="0" step="any"
+                                    value={unitPrice}
+                                    onChange={e => changePrice(e.target.value)}
+                                    style={{ width: 120, textAlign: 'right', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--color-gold-dark)' }}
+                                  />
+                                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                    Subtotal: <strong>{formatCurrency(qty * unitPrice)}</strong>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
