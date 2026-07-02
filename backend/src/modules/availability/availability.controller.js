@@ -3,6 +3,9 @@ import { asyncHandler } from '../../core/utils/async-handler.js';
 import { successResponse } from '../../core/utils/response.js';
 import { AppError } from '../../core/errors/AppError.js';
 
+const WHOLESALE_RATE_ID = '99113';
+const CITY = 'BOGOTA';
+
 export const availabilityController = {
   check: asyncHandler(async (req, res) => {
     const { checkIn, nights, adults, childrenAges } = req.query;
@@ -11,22 +14,25 @@ export const availabilityController = {
       throw new AppError('Se requieren checkIn, nights y adults', 400, 'VALIDATION_ERROR');
     }
 
+    const childrenCount = parseInt(childrenAges ?? 0, 10) || 0;
+    const childrenAgesArray = Array.from({ length: childrenCount }, () => 8);
+
     const params = new URLSearchParams({
       checkin: checkIn,
       nights: String(nights),
-      adults: String(adults),
-      children_ages: String(childrenAges ?? 0),
-      hotel_id: env.AUTOCORE_HOTEL_ID,
+      city: CITY,
     });
 
-    const url = `${env.AUTOCORE_API_URL}/bookings/availability?${params.toString()}`;
+    const url = `${env.AUTOCORE_API_URL}/bookings/agencies/wholesale/availability?${params.toString()}`;
 
     const response = await fetch(url, {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'access_key': env.AUTOCORE_ACCESS_KEY,
         'secret_key': env.AUTOCORE_SECRET_KEY,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ layout: [{ adults: String(adults), children_ages: childrenAgesArray }] }),
     });
 
     if (!response.ok) {
@@ -36,9 +42,15 @@ export const availabilityController = {
 
     const data = await response.json();
 
-    const standardRooms = (data.available_rooms || []).flatMap(room =>
+    // Response is an array of hotels; find Windsor House by roomcloud_id
+    const hotels = Array.isArray(data) ? data : [data];
+    const hotelEntry = hotels.find(h => h.hotel?.roomcloud_id === env.AUTOCORE_HOTEL_ID) || {};
+    const availabilityBlock = (hotelEntry.availability || [])[0] || {};
+    const availableRooms = availabilityBlock.available_rooms || [];
+
+    const standardRooms = availableRooms.flatMap(room =>
       room.products
-        .filter(p => p.rateId === '84414')
+        .filter(p => p.rateId === WHOLESALE_RATE_ID)
         .map(p => ({
           roomId: room.roomId,
           roomName: room.roomName,
@@ -55,6 +67,6 @@ export const availabilityController = {
         }))
     );
 
-    successResponse(res, { totalCount: data.total_count, rooms: standardRooms });
+    successResponse(res, { totalCount: availabilityBlock.total_count ?? 0, rooms: standardRooms });
   }),
 };
