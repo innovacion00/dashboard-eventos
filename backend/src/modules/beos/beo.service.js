@@ -23,10 +23,13 @@ export const beoService = {
       itemsByCategory[cat].push(item);
     }
 
+    // Always ensure a SALON BEO exists as the base setup order
+    if (!itemsByCategory['SALON']) itemsByCategory['SALON'] = [];
+
     const created = [];
     for (const category of CATEGORY_ORDER) {
       const items = itemsByCategory[category];
-      if (!items || items.length === 0) continue;
+      if (!items) continue;
 
       const existing = await beoRepository.findByEventIdAndCategory(event._id, category);
       if (existing) { created.push(existing); continue; }
@@ -80,13 +83,15 @@ export const beoService = {
   },
 
   async createBeo(data, requestingUser, req) {
-    if (data.category) {
-      const existing = await beoRepository.findByEventIdAndCategory(data.eventId, data.category);
+    const category = data.category || 'SALON';
+    if (category) {
+      const existing = await beoRepository.findByEventIdAndCategory(data.eventId, category);
       if (existing) throw new ConflictError('Este evento ya tiene un BEO para esta categoría.');
     }
 
     const beo = await beoRepository.create({
       ...data,
+      category,
       createdBy: requestingUser.id,
     });
 

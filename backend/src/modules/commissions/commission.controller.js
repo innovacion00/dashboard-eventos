@@ -33,7 +33,7 @@ function mapCommission(c) {
 export const commissionController = {
   list: asyncHandler(async (req, res) => {
     const result = await commissionService.listCommissions(req.query);
-    successResponse(res, result.data.map(mapCommission), result.meta);
+    successResponse(res, result.data.map(mapCommission), 200, result.meta);
   }),
 
   getById: asyncHandler(async (req, res) => {
@@ -43,7 +43,7 @@ export const commissionController = {
 
   create: asyncHandler(async (req, res) => {
     const com = await commissionService.createCommission(req.body, req.user, req);
-    successResponse(res, mapCommission(com), undefined, 201);
+    successResponse(res, mapCommission(com), 201);
   }),
 
   update: asyncHandler(async (req, res) => {

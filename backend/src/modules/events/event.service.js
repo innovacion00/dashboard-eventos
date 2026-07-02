@@ -7,6 +7,7 @@ import { notify } from '../notifications/notification.service.js';
 import { sendEmail } from '../notifications/email.service.js';
 import { beoService } from '../beos/beo.service.js';
 import { invoiceService } from '../invoices/invoice.service.js';
+import { commissionService } from '../commissions/commission.service.js';
 import { logger } from '../../config/logger.js';
 
 const SURVEY_URL = 'https://b24-xz8e0u.bitrix24.site/eventos-formulario/';
@@ -42,6 +43,12 @@ export const eventService = {
       await invoiceService.createFromEvent(event, null, requestingUser, req);
     } catch (err) {
       logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
+
+    try {
+      await commissionService.autoCreateForEvent(event._id, requestingUser.id);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear comisión automática');
     }
 
     return event;
@@ -85,6 +92,12 @@ export const eventService = {
       await invoiceService.createFromEvent(event, null, requestingUser, req);
     } catch (err) {
       logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
+
+    try {
+      await commissionService.autoCreateForEvent(event._id, event.ownerId || requestingUser.id);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear comisión automática');
     }
 
     return event;
@@ -133,6 +146,12 @@ export const eventService = {
       await invoiceService.createFromEvent(event, quote, requestingUser, req);
     } catch (err) {
       logger.error({ err, eventId: event._id }, 'Error al crear factura desde evento');
+    }
+
+    try {
+      await commissionService.autoCreateForEvent(event._id, requestingUser.id);
+    } catch (err) {
+      logger.error({ err, eventId: event._id }, 'Error al crear comisión automática');
     }
 
     return event;

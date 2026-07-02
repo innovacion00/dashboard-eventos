@@ -64,6 +64,10 @@ function occupationsForCell(occupations, dateStr, slot) {
   });
 }
 
+function occupationsForRoomDay(occupations, dateStr, roomName) {
+  return occupations.filter(o => toUtcDateStr(o.date) === dateStr && o.room === roomName);
+}
+
 export function PlanningGrid() {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState('');
@@ -81,17 +85,22 @@ export function PlanningGrid() {
     }).catch(() => {});
   }, []);
 
+  const selectedRoomObj = rooms.find(r => String(r._id || r.id) === selectedRoom);
+  const isSalaDeJuntas = selectedRoomObj?.name?.toLowerCase().includes('juntas');
+  const roomModeRooms = rooms.filter(r => !r.name?.toLowerCase().includes('juntas'));
+
   useEffect(() => {
     if (!selectedRoom) return;
     setLoading(true);
     setError('');
     const startDate = toDateStr(weekStart);
     const endDate = toDateStr(addDays(weekStart, 6));
-    planningApi.getOccupations({ roomId: selectedRoom, startDate, endDate })
+    const params = { roomId: selectedRoom, startDate, endDate };
+    planningApi.getOccupations(params)
       .then(res => setOccupations(res.data || []))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [selectedRoom, weekStart]);
+  }, [selectedRoom, weekStart, isSalaDeJuntas]);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -123,48 +132,74 @@ export function PlanningGrid() {
         </div>
       </div>
 
-      <div className="planning-grid" onClick={() => setTooltip(null)}>
+      <div className={`planning-grid${isSalaDeJuntas ? '' : ' planning-grid--room-mode'}`} onClick={() => setTooltip(null)}>
         {/* Header row */}
-        <div className="planning-grid__header">Hora</div>
+        <div className="planning-grid__header">{isSalaDeJuntas ? 'Hora' : 'Salón'}</div>
         {weekDays.map((d, i) => (
           <div className="planning-grid__header" key={i}>
             {DAY_NAMES_FULL[d.getDay()]}<br />{d.getDate()}/{d.getMonth() + 1}
           </div>
         ))}
 
-        {/* Rows */}
-        {TIME_SLOTS.map((slot, si) => (
-          <>
-            <div className="planning-grid__hour-label" key={`h-${si}`}>
-              {slot.label}
-            </div>
-            {weekDays.map((d, di) => {
-              const dateStr = toDateStr(d);
-              const cellKey = `${si}-${di}`;
-              const cellOccs = occupationsForCell(occupations, dateStr, slot);
-
-              return (
-                <div className="planning-grid__cell" key={cellKey} style={{ position: 'relative' }}>
-                  {cellOccs.map(o => (
-                    <div
-                      key={o.id}
-                      className={`planning-chip planning-chip--${o.type}`}
-                      title={`${o.number} — ${o.company}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (tooltip?.id === o.id) { setTooltip(null); return; }
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setTooltip({ ...o, x: rect.left, y: rect.bottom + 4 });
-                      }}
-                    >
-                      {o.number}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </>
-        ))}
+        {isSalaDeJuntas ? (
+          /* Time-slot rows (Sala de Juntas) */
+          TIME_SLOTS.map((slot, si) => (
+            <>
+              <div className="planning-grid__hour-label" key={`h-${si}`}>
+                {slot.label}
+              </div>
+              {weekDays.map((d, di) => {
+                const dateStr = toDateStr(d);
+                const cellOccs = occupationsForCell(occupations, dateStr, slot);
+                return (
+                  <div className="planning-grid__cell" key={`${si}-${di}`} style={{ position: 'relative' }}>
+                    {cellOccs.map(o => (
+                      <div key={o.id} className={`planning-chip planning-chip--${o.type}`}
+                        title={`${o.number} — ${o.company}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (tooltip?.id === o.id) { setTooltip(null); return; }
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltip({ ...o, x: rect.left, y: rect.bottom + 4 });
+                        }}>
+                        {o.number}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </>
+          ))
+        ) : (
+          /* Room rows (todos los salones excepto Sala de Juntas) */
+          (selectedRoomObj ? [selectedRoomObj] : []).map((room, ri) => (
+            <>
+              <div className="planning-grid__hour-label planning-grid__room-label" key={`r-${ri}`}>
+                {room.name}
+              </div>
+              {weekDays.map((d, di) => {
+                const dateStr = toDateStr(d);
+                const cellOccs = occupationsForRoomDay(occupations, dateStr, room.name);
+                return (
+                  <div className="planning-grid__cell" key={`${ri}-${di}`} style={{ position: 'relative' }}>
+                    {cellOccs.map(o => (
+                      <div key={o.id} className={`planning-chip planning-chip--${o.type}`}
+                        title={`${o.number} — ${o.company}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (tooltip?.id === o.id) { setTooltip(null); return; }
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltip({ ...o, x: rect.left, y: rect.bottom + 4 });
+                        }}>
+                        {o.number}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </>
+          ))
+        )}
       </div>
 
       <div className="planning-legend">

@@ -26,12 +26,14 @@ function byCat(beosArr) {
   return map;
 }
 
+const TYPED_CATS = ['AB', 'AV', 'OTROS', 'EXTERNO'];
+
 function buildDraft(beosArr) {
   const c     = byCat(beosArr);
-  const main  = c['SALON'] || beosArr[0];
   const ab    = c['AB'];
   const av    = c['AV'];
   const otros = c['OTROS'];
+  const main  = c['SALON'] || beosArr.find(b => !TYPED_CATS.includes(b.category)) || null;
 
   return {
     setup: {
@@ -133,7 +135,7 @@ export function BeoPanel({ eventId }) {
     setSaving(true);
     setError('');
     try {
-      const res = await beosApi.create({ eventId, menu: [], audiovisual: [], personnel: [], suppliers: [] });
+      const res = await beosApi.create({ eventId, category: 'SALON', menu: [], audiovisual: [], personnel: [], suppliers: [] });
       const newBeo = res.data;
       setBeos([newBeo]);
       setDraft(buildDraft([newBeo]));
@@ -255,10 +257,10 @@ export function BeoPanel({ eventId }) {
   }
 
   const c        = byCat(beos);
-  const mainBeo  = c['SALON'] || beos[0];
   const abBeo    = c['AB'];
   const avBeo    = c['AV'];
   const otrosBeo = c['OTROS'];
+  const mainBeo  = c['SALON'] || beos.find(b => !TYPED_CATS.includes(b.category)) || null;
 
   // SALON → Montaje, AB → A&B, AV → AV, OTROS → Personal
   const tabBeo = { setup: mainBeo, menu: abBeo, audiovisual: avBeo, personnel: otrosBeo || mainBeo, suppliers: mainBeo, notes: mainBeo };

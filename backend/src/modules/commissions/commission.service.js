@@ -1,4 +1,5 @@
 import { commissionRepository } from './commission.repository.js';
+import { Commission } from './commission.model.js';
 import { NotFoundError } from '../../core/errors/NotFoundError.js';
 import { AppError } from '../../core/errors/AppError.js';
 import { audit } from '../audit/audit.service.js';
@@ -109,6 +110,19 @@ export const commissionService = {
     }
 
     return updated;
+  },
+
+  async autoCreateForEvent(eventId, ownerId) {
+    const existing = await Commission.findOne({ eventId, active: true }).lean();
+    if (existing) return existing;
+    return Commission.create({
+      eventId,
+      beneficiaryId: ownerId || undefined,
+      beneficiaryType: 'EJECUTIVO_COMERCIAL',
+      baseAmount: 0,
+      rate: 0.03,
+      createdBy: ownerId || undefined,
+    });
   },
 
   async deleteCommission(id, requestingUser, req) {
